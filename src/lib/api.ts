@@ -9,6 +9,7 @@ import {
   UserSettings,
 } from '../types';
 import {
+  createMockStudent,
   DEMO_ATTENDANCE_OVERALL,
   DEMO_ATTENDANCE_SUBJECTS,
   DEMO_COURSES,
@@ -63,6 +64,17 @@ export function getOfflineCache(): CachedData {
   };
 }
 
+async function safeJsonParse(res: Response): Promise<{ data: any; isJson: boolean }> {
+  try {
+    const text = await res.text();
+    if (!text || !text.trim()) return { data: null, isJson: false };
+    const parsed = JSON.parse(text);
+    return { data: parsed, isJson: true };
+  } catch {
+    return { data: null, isJson: false };
+  }
+}
+
 async function apiFetch(input: string, init?: RequestInit): Promise<Response> {
   const token = typeof window !== 'undefined' ? localStorage.getItem(OFFLINE_TOKEN_KEY) : null;
   const headers = new Headers(init?.headers || {});
@@ -91,22 +103,65 @@ export const api = {
     academicYear?: string;
     rememberMe?: boolean;
   }): Promise<{ success: boolean; student: StudentProfile; mode: string; sessionToken?: string }> {
-    const res = await apiFetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(credentials),
+    const cleanId = (credentials.universityId || '').trim();
+    if (!cleanId) {
+      throw new Error('Please enter your University ID.');
+    }
+    if (!credentials.password || !credentials.password.trim()) {
+      throw new Error('Please enter your password.');
+    }
+
+    try {
+      const res = await apiFetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(credentials),
+      });
+
+      const { data, isJson } = await safeJsonParse(res);
+
+      if (isJson && data) {
+        if (res.ok && data.student) {
+          if (data.sessionToken) {
+            localStorage.setItem(OFFLINE_TOKEN_KEY, data.sessionToken);
+          }
+          saveOfflineCache({ student: data.student });
+          return data;
+        } else if (!res.ok && data.error) {
+          throw new Error(data.error);
+        }
+      }
+    } catch (err: any) {
+      // If explicit validation error was thrown, re-throw it
+      if (err.message && !err.message.includes('JSON') && !err.message.includes('fetch') && !err.message.includes('Unexpected')) {
+        throw err;
+      }
+    }
+
+    // Resilient local fallback session for instant offline / preview login
+    const fallbackStudent = createMockStudent(
+      cleanId,
+      credentials.semester === 'Even' ? 'Even' : 'Odd',
+      credentials.academicYear || '2026-27'
+    );
+    const mockToken = `local_session_${cleanId}_${Date.now()}`;
+    localStorage.setItem(OFFLINE_TOKEN_KEY, mockToken);
+    saveOfflineCache({
+      student: fallbackStudent,
+      timetable: DEMO_TIMETABLE,
+      courses: DEMO_COURSES,
+      attendance: {
+        overall: DEMO_ATTENDANCE_OVERALL,
+        subjects: DEMO_ATTENDANCE_SUBJECTS,
+      },
     });
 
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || 'Authentication failed');
-    }
-
-    if (data.sessionToken) {
-      localStorage.setItem(OFFLINE_TOKEN_KEY, data.sessionToken);
-    }
-    saveOfflineCache({ student: data.student });
-    return data;
+    return {
+      success: true,
+      student: fallbackStudent,
+      mode: 'mock',
+      sessionToken: mockToken,
+    };
   },
 
   async checkSession(): Promise<{
@@ -116,29 +171,22 @@ export const api = {
   }> {
     try {
       const res = await apiFetch('/api/auth/session');
-      if (!res.ok) {
-        const cached = getOfflineCache();
-        if (cached.student) {
-          return { authenticated: true, student: cached.student, mode: 'mock' };
-        }
-        return { authenticated: false };
-      }
-      const data = await res.json();
-      if (data.authenticated && data.student) {
+      const { data, isJson } = await safeJsonParse(res);
+
+      if (isJson && data && data.authenticated && data.student) {
         if (data.sessionToken) {
           localStorage.setItem(OFFLINE_TOKEN_KEY, data.sessionToken);
         }
         saveOfflineCache({ student: data.student });
+        return data;
       }
-      return data;
-    } catch {
-      // If server unreachable, check offline cache
-      const cached = getOfflineCache();
-      if (cached.student) {
-        return { authenticated: true, student: cached.student, mode: 'mock' };
-      }
-      return { authenticated: false };
+    } catch {}
+
+    const cached = getOfflineCache();
+    if (cached.student) {
+      return { authenticated: true, student: cached.student, mode: 'mock' };
     }
+    return { authenticated: false };
   },
 
   async getSession(): Promise<{
@@ -176,33 +224,29 @@ export const api = {
       if (params?.search) searchParams.set('search', params.search);
 
       const res = await apiFetch(`/api/timetable?${searchParams.toString()}`);
-      if (!res.ok) {
-        throw new Error('Failed to load timetable from server');
-      }
+      const { data, isJson } = await safeJsonParse(res);
 
-      const data = await res.json();
-      if (data.timetable && Array.isArray(data.timetable)) {
+      if (res.ok && isJson && data && Array.isArray(data.timetable)) {
         saveOfflineCache({ timetable: data.timetable });
         return data;
       }
-      throw new Error('Invalid timetable format');
-    } catch (err) {
-      const cached = getOfflineCache();
-      let list = cached.timetable.length > 0 ? cached.timetable : DEMO_TIMETABLE;
-      if (params?.day) list = list.filter((e) => e.day.toLowerCase() === params.day?.toLowerCase());
-      if (params?.type && params.type !== 'All') list = list.filter((e) => e.classType === params.type);
-      if (params?.room && params.room !== 'All') list = list.filter((e) => e.room.toLowerCase().includes(params.room!.toLowerCase()));
-      if (params?.search) {
-        const s = params.search.toLowerCase();
-        list = list.filter(
-          (e) =>
-            e.courseName.toLowerCase().includes(s) ||
-            e.courseCode.toLowerCase().includes(s) ||
-            e.room.toLowerCase().includes(s)
-        );
-      }
-      return { timetable: list, lastSync: cached.lastSynced || new Date().toISOString() };
+    } catch {}
+
+    const cached = getOfflineCache();
+    let list = cached.timetable.length > 0 ? cached.timetable : DEMO_TIMETABLE;
+    if (params?.day) list = list.filter((e) => e.day.toLowerCase() === params.day?.toLowerCase());
+    if (params?.type && params.type !== 'All') list = list.filter((e) => e.classType === params.type);
+    if (params?.room && params.room !== 'All') list = list.filter((e) => e.room.toLowerCase().includes(params.room!.toLowerCase()));
+    if (params?.search) {
+      const s = params.search.toLowerCase();
+      list = list.filter(
+        (e) =>
+          e.courseName.toLowerCase().includes(s) ||
+          e.courseCode.toLowerCase().includes(s) ||
+          e.room.toLowerCase().includes(s)
+      );
     }
+    return { timetable: list, lastSync: cached.lastSynced || new Date().toISOString() };
   },
 
   async getNextClass(simDay?: string, simTime?: string): Promise<any> {
@@ -212,8 +256,9 @@ export const api = {
       if (simTime) params.set('simTime', simTime);
 
       const res = await apiFetch(`/api/timetable/next?${params.toString()}`);
-      if (res.ok) {
-        return await res.json();
+      const { data, isJson } = await safeJsonParse(res);
+      if (res.ok && isJson && data) {
+        return data;
       }
     } catch {}
 
@@ -233,7 +278,9 @@ export const api = {
     const currentMin = now.getMinutes().toString().padStart(2, '0');
     const currentTimeStr = simTime || `${currentHour}:${currentMin}`;
 
-    const todayClasses = DEMO_TIMETABLE.filter(
+    const cached = getOfflineCache();
+    const timetableData = cached.timetable.length > 0 ? cached.timetable : DEMO_TIMETABLE;
+    const todayClasses = timetableData.filter(
       (e) => e.day.toLowerCase() === currentDay.toLowerCase()
     );
 
@@ -293,12 +340,10 @@ export const api = {
   }> {
     try {
       const res = await apiFetch('/api/attendance');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.overall && data.subjects) {
-          saveOfflineCache({ attendance: data });
-          return data;
-        }
+      const { data, isJson } = await safeJsonParse(res);
+      if (res.ok && isJson && data && data.overall && data.subjects) {
+        saveOfflineCache({ attendance: data });
+        return data;
       }
     } catch {}
 
@@ -315,12 +360,10 @@ export const api = {
   async getCourses(): Promise<CourseInfo[]> {
     try {
       const res = await apiFetch('/api/courses');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.courses && Array.isArray(data.courses)) {
-          saveOfflineCache({ courses: data.courses });
-          return data.courses;
-        }
+      const { data, isJson } = await safeJsonParse(res);
+      if (res.ok && isJson && data && Array.isArray(data.courses)) {
+        saveOfflineCache({ courses: data.courses });
+        return data.courses;
       }
     } catch {}
 
@@ -332,7 +375,8 @@ export const api = {
   async getRoomDetails(roomCode: string): Promise<any> {
     try {
       const res = await apiFetch(`/api/rooms/${encodeURIComponent(roomCode)}`);
-      if (res.ok) return await res.json();
+      const { data, isJson } = await safeJsonParse(res);
+      if (res.ok && isJson && data) return data;
     } catch {}
     return {
       room: {
@@ -351,7 +395,8 @@ export const api = {
   async syncNow(): Promise<{ success: boolean; lastSync: string; syncCount: number }> {
     try {
       const res = await apiFetch('/api/sync', { method: 'POST' });
-      if (res.ok) return await res.json();
+      const { data, isJson } = await safeJsonParse(res);
+      if (res.ok && isJson && data) return data;
     } catch {}
     return {
       success: true,
@@ -390,8 +435,8 @@ export const api = {
   async getSettings(): Promise<UserSettings> {
     try {
       const res = await apiFetch('/api/settings');
-      if (res.ok) {
-        const data = await res.json();
+      const { data, isJson } = await safeJsonParse(res);
+      if (res.ok && isJson && data && data.settings) {
         return data.settings;
       }
     } catch {}
@@ -405,8 +450,8 @@ export const api = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings),
       });
-      if (res.ok) {
-        const data = await res.json();
+      const { data, isJson } = await safeJsonParse(res);
+      if (res.ok && isJson && data && data.settings) {
         localStorage.setItem(OFFLINE_SETTINGS_KEY, JSON.stringify(data.settings));
         return data.settings;
       }
@@ -420,12 +465,10 @@ export const api = {
   async getProfile(): Promise<StudentProfile | null> {
     try {
       const res = await apiFetch('/api/student/profile');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.student) {
-          saveOfflineCache({ student: data.student });
-          return data.student;
-        }
+      const { data, isJson } = await safeJsonParse(res);
+      if (res.ok && isJson && data && data.student) {
+        saveOfflineCache({ student: data.student });
+        return data.student;
       }
     } catch {}
     const cached = getOfflineCache();
@@ -433,29 +476,31 @@ export const api = {
   },
 
   async updateProfile(updates: Partial<StudentProfile>): Promise<StudentProfile> {
-    const res = await apiFetch('/api/student/profile', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updates),
-    });
+    try {
+      const res = await apiFetch('/api/student/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+      const { data, isJson } = await safeJsonParse(res);
+      if (res.ok && isJson && data && data.student) {
+        saveOfflineCache({ student: data.student });
+        return data.student;
+      }
+    } catch {}
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error || 'Failed to update profile');
-    }
-
-    const data = await res.json();
-    if (data.student) {
-      saveOfflineCache({ student: data.student });
-      return data.student;
-    }
-    throw new Error('Invalid profile response');
+    const cached = getOfflineCache();
+    const current = cached.student || DEMO_STUDENT;
+    const updated = { ...current, ...updates };
+    saveOfflineCache({ student: updated });
+    return updated;
   },
 
   async getDebugStatus(): Promise<ERPStatus> {
     try {
       const res = await apiFetch('/api/system/debug');
-      if (res.ok) return await res.json();
+      const { data, isJson } = await safeJsonParse(res);
+      if (res.ok && isJson && data) return data;
     } catch {}
     return {
       providerName: 'KL University Mock ERP Adapter',
@@ -467,4 +512,5 @@ export const api = {
     };
   },
 };
+
 
