@@ -1,0 +1,6 @@
+{
+  "name": "KLNIGHT",
+  "description": "KLNIGHT - Student Timetable & Attendance Dashboard with real-time schedule, day-wise classes, and live attendance metrics.",
+  "requestFramePermissions": ["notifications"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
