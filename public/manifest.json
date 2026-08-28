@@ -1,8 +1,9 @@
 {
+  "id": "/?source=pwa",
   "name": "KLNIGHT — Timetable & Attendance",
   "short_name": "KLNIGHT",
   "description": "Student Academic Schedule, Real-Time Class Timetable & Attendance Tracker",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
   "background_color": "#FFFFFF",
