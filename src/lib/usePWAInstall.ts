@@ -15,11 +15,10 @@ export function usePWAInstall() {
   const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
 
   useEffect(() => {
-    // Check if app is running in standalone mode (already installed)
+    // Check if app is actually running in standalone mode (installed PWA)
     const isStandalone =
       window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as any).standalone === true ||
-      document.referrer.includes('android-app://');
+      (window.navigator as any).standalone === true;
 
     if (isStandalone) {
       setIsInstalled(true);

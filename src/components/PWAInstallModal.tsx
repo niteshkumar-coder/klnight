@@ -1,16 +1,18 @@
 import {
-  AlertTriangle,
+  ArrowDown,
   ArrowRight,
   Check,
   CheckCircle2,
   Copy,
   Download,
   ExternalLink,
-  Globe,
   HelpCircle,
   Laptop,
   Layers,
+  Menu,
+  MoreVertical,
   Phone,
+  PlusSquare,
   QrCode,
   Share2,
   Smartphone,
@@ -45,12 +47,10 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
   const [directAppUrl, setDirectAppUrl] = useState('');
 
   useEffect(() => {
-    // Determine direct clean URL
     if (typeof window !== 'undefined') {
       const url = window.location.href;
       setDirectAppUrl(url);
 
-      // Check if running inside iframe or preview
       try {
         setIsInIframe(window.self !== window.top);
       } catch (e) {
@@ -93,8 +93,8 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'KLNIGHT — Student Timetable App',
-          text: 'Install KLNIGHT Timetable & Attendance App on your phone (Works 100% Offline):',
+          title: 'KLNIGHT — Timetable & Attendance App',
+          text: 'Open and Install KLNIGHT Timetable App (Works 100% Offline):',
           url: directAppUrl,
         });
       } catch (err) {
@@ -128,32 +128,32 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
   };
 
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(
-    directAppUrl || 'https://ais-pre-wimczufw2qgqeh7g2mtse5-582044349376.asia-southeast1.run.app'
+    directAppUrl || 'https://klnight.vercel.app'
   )}`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-xs animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-xs animate-in fade-in duration-200">
       <div
         className="relative w-full max-w-lg bg-[#FFFFFF] border border-[#E5E5E5] rounded-3xl shadow-2xl overflow-hidden font-sans max-h-[92vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Header */}
-        <div className="p-5 bg-[#111111] text-[#FFFFFF] flex items-center justify-between shrink-0">
+        <div className="p-4 sm:p-5 bg-[#111111] text-[#FFFFFF] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <img
               src="https://i.ibb.co/XrWyDBV0/image.png"
               alt="KLNIGHT App Icon"
-              className="w-11 h-11 rounded-2xl object-contain bg-[#1C1C1C] p-1 border border-white/15 shadow-inner"
+              className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl object-contain bg-[#1C1C1C] p-1 border border-white/15 shadow-inner"
               referrerPolicy="no-referrer"
             />
             <div>
               <h3 className="text-base sm:text-lg font-bold font-display tracking-tight text-white flex items-center gap-2">
                 <span>Install KLNIGHT App</span>
                 <span className="text-[10px] font-mono-code font-bold px-2 py-0.5 rounded-full bg-[#B8FF00] text-black">
-                  PWA OFFLINE
+                  OFFLINE
                 </span>
               </h3>
-              <p className="text-xs text-[#A3A3A3]">Standalone Mobile App (No Internet Needed)</p>
+              <p className="text-xs text-[#A3A3A3]">Add to Phone Home Screen (0s Load Time)</p>
             </div>
           </div>
           <button
@@ -166,65 +166,35 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
         </div>
 
         {/* Modal Scrollable Body */}
-        <div className="p-5 space-y-4 overflow-y-auto flex-1">
-          {/* EXPLANATION: Why 'Adding Preview Site' happens and how to fix */}
-          <div className="p-4 rounded-2xl bg-[#FEF2F2] border border-[#FECACA] text-[#991B1B] text-xs space-y-2">
-            <div className="font-bold flex items-center gap-1.5 text-xs text-[#7F1D1D]">
-              <AlertTriangle className="w-4 h-4 text-[#DC2626] shrink-0" />
-              <span>"Adding Preview Site" Kyun Aa Raha Tha?</span>
-            </div>
-            <p className="text-[11px] leading-relaxed text-[#991B1B]">
-              Jab aap app ko AI Studio editor ya preview box ke andar dekh rahe hote hain, to phone AI Studio ka shortcut banane lagta hai. 
-              <strong> Real App download karne ke liye ise direct phone browser me open karein.</strong>
-            </p>
-
-            <div className="flex flex-wrap items-center gap-2 pt-1">
-              <button
-                type="button"
-                onClick={handleOpenDirect}
-                className="px-3.5 py-2 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white text-xs font-bold font-mono-code flex items-center gap-1.5 cursor-pointer shadow-xs transition-transform active:scale-95"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-                <span>OPEN DIRECT IN CHROME / SAFARI</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleShare}
-                className="px-3 py-2 rounded-xl bg-white hover:bg-[#F3F4F6] text-[#7F1D1D] border border-[#FECACA] text-xs font-bold font-mono-code flex items-center gap-1.5 cursor-pointer"
-              >
-                <Share2 className="w-3.5 h-3.5" />
-                <span>SHARE TO PHONE</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setShowQR(!showQR)}
-                className="px-3 py-2 rounded-xl bg-white hover:bg-[#F3F4F6] text-[#7F1D1D] border border-[#FECACA] text-xs font-bold font-mono-code flex items-center gap-1.5 cursor-pointer"
-              >
-                <QrCode className="w-3.5 h-3.5" />
-                <span>{showQR ? 'HIDE QR' : 'SCAN QR CODE'}</span>
-              </button>
-            </div>
-          </div>
-
-          {/* QR Code Viewer if toggled */}
-          {showQR && (
-            <div className="p-4 rounded-2xl bg-[#F9FAFB] border border-[#E5E5E5] text-center space-y-3">
-              <div className="text-xs font-bold text-[#111111] flex items-center justify-center gap-1.5 font-mono-code">
-                <QrCode className="w-4 h-4 text-[#111111]" />
-                <span>Scan from Mobile Camera / Google Lens</span>
+        <div className="p-4 sm:p-5 space-y-4 overflow-y-auto flex-1">
+          {/* If inside preview iframe */}
+          {isInIframe && (
+            <div className="p-3.5 rounded-2xl bg-[#FEF3C7] border border-[#FCD34D] text-[#92400E] text-xs space-y-2">
+              <div className="font-bold flex items-center gap-1.5">
+                <ExternalLink className="w-4 h-4 text-[#B45309]" />
+                <span>Open in Mobile Chrome / Safari Browser:</span>
               </div>
-              <div className="inline-block p-2.5 bg-white rounded-2xl border border-[#E5E5E5] shadow-xs">
-                <img
-                  src={qrCodeUrl}
-                  alt="QR Code to install KLNIGHT"
-                  className="w-48 h-48 mx-auto"
-                />
-              </div>
-              <p className="text-[11px] text-[#666666]">
-                Phone ka camera ya Google Lens open karke scan karein, link direct <strong>Google Chrome</strong> me open hogi.
+              <p className="text-[11px] leading-relaxed text-[#78350F]">
+                Real App install karne ke liye ise direct phone browser me open karein.
               </p>
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={handleOpenDirect}
+                  className="px-3.5 py-1.5 rounded-xl bg-[#B45309] hover:bg-[#92400E] text-white text-xs font-bold font-mono-code flex items-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>OPEN IN DIRECT BROWSER</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCopyLink}
+                  className="px-3 py-1.5 rounded-xl bg-white/80 hover:bg-white text-[#92400E] border border-[#FCD34D] text-xs font-bold font-mono-code flex items-center gap-1.5 cursor-pointer"
+                >
+                  {copied ? <Check className="w-3.5 h-3.5 text-[#16A34A]" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copied ? 'COPIED!' : 'COPY LINK'}</span>
+                </button>
+              </div>
             </div>
           )}
 
@@ -237,7 +207,7 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
                   <span>1-CLICK DIRECT INSTALL</span>
                 </span>
                 <span className="text-[10px] bg-[#16A34A] text-white px-2 py-0.5 rounded-full font-mono-code font-bold">
-                  NATIVE PROMPT
+                  READY
                 </span>
               </div>
               <button
@@ -252,24 +222,32 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
             </div>
           )}
 
-          {/* Already installed state */}
-          {isInstalled && (
-            <div className="p-4 rounded-2xl bg-[#F0FDF4] border border-[#86EFAC] flex items-center gap-3 text-[#166534] text-xs font-semibold">
-              <CheckCircle2 className="w-6 h-6 text-[#16A34A] shrink-0" />
-              <div>
-                <div className="font-bold">App Already Installed!</div>
-                <div className="text-[11px] text-[#15803D] mt-0.5">
-                  KLNIGHT aapke phone ke Home Screen par available hai aur offline 0s load ke sath work karega.
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Device Tabs */}
           <div>
-            <div className="text-xs font-bold text-[#111111] mb-2 uppercase tracking-wide font-mono-code">
-              Select Your Phone OS:
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-bold text-[#111111] uppercase tracking-wide font-mono-code">
+                Installation Guide:
+              </span>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={handleShare}
+                  className="text-[11px] font-mono-code font-bold text-[#111111] bg-[#F3F4F6] hover:bg-[#E5E5E5] px-2.5 py-1 rounded-lg flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <Share2 className="w-3 h-3 text-[#111111]" />
+                  <span>Share Link</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowQR(!showQR)}
+                  className="text-[11px] font-mono-code font-bold text-[#111111] bg-[#F3F4F6] hover:bg-[#E5E5E5] px-2.5 py-1 rounded-lg flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <QrCode className="w-3 h-3 text-[#111111]" />
+                  <span>{showQR ? 'Hide QR' : 'QR Code'}</span>
+                </button>
+              </div>
             </div>
+
             <div className="flex rounded-xl bg-[#F3F4F6] p-1 text-xs font-mono-code font-bold text-[#666666]">
               <button
                 type="button"
@@ -281,7 +259,7 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
                 }`}
               >
                 <Smartphone className="w-4 h-4 text-[#16A34A]" />
-                <span>Android Phone</span>
+                <span>Android (Chrome)</span>
               </button>
               <button
                 type="button"
@@ -305,90 +283,123 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
                 }`}
               >
                 <Laptop className="w-4 h-4 text-[#666666]" />
-                <span>PC / Chrome</span>
+                <span>Laptop</span>
               </button>
             </div>
           </div>
 
-          {/* Android Steps (Exact Chrome UI Walkthrough) */}
+          {/* QR Code Viewer */}
+          {showQR && (
+            <div className="p-4 rounded-2xl bg-[#F9FAFB] border border-[#E5E5E5] text-center space-y-2">
+              <div className="text-xs font-bold text-[#111111] flex items-center justify-center gap-1.5 font-mono-code">
+                <QrCode className="w-4 h-4 text-[#111111]" />
+                <span>Scan with Camera / Google Lens</span>
+              </div>
+              <div className="inline-block p-2 bg-white rounded-2xl border border-[#E5E5E5] shadow-xs">
+                <img
+                  src={qrCodeUrl}
+                  alt="QR Code"
+                  className="w-40 h-40 mx-auto"
+                />
+              </div>
+              <p className="text-[10px] text-[#666666]">
+                Scan to open in Google Chrome on your phone directly.
+              </p>
+            </div>
+          )}
+
+          {/* ANDROID VISUAL STEP BY STEP INSTRUCTIONS */}
           {deviceType === 'android' && (
             <div className="space-y-2.5 text-xs text-[#333333]">
-              <div className="p-3.5 rounded-2xl bg-[#F9FAFB] border border-[#E5E5E5] space-y-1">
-                <div className="font-bold text-[#111111] text-xs flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-[#111111] text-white flex items-center justify-center text-[10px]">1</span>
-                  <span>Open in Google Chrome Browser</span>
+              {/* Step 1: Top Right 3-dots */}
+              <div className="p-3.5 rounded-2xl bg-[#FFFFFF] border-2 border-[#111111] space-y-2 shadow-xs">
+                <div className="flex items-center justify-between">
+                  <div className="font-bold text-[#111111] text-xs flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-[#111111] text-white flex items-center justify-center text-[10px] font-mono-code">1</span>
+                    <span>Chrome ke Top Right me 3 Dots (⋮) dabayein</span>
+                  </div>
+                  <div className="p-1 rounded-lg bg-[#111111] text-white flex items-center justify-center">
+                    <MoreVertical className="w-4 h-4 text-[#B8FF00]" />
+                  </div>
                 </div>
                 <p className="text-[#666666] text-[11px] pl-7">
-                  Phone ke <strong>Google Chrome</strong> me link open karein.
+                  Screen ke bilkul upar right corner me <strong>3 dots (⋮)</strong> menu par click karein.
                 </p>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-[#F9FAFB] border border-[#E5E5E5] space-y-1">
-                <div className="font-bold text-[#111111] text-xs flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-[#111111] text-white flex items-center justify-center text-[10px]">2</span>
-                  <span>Tap on 3 Dots (⋮) at top right</span>
-                </div>
-                <p className="text-[#666666] text-[11px] pl-7">
-                  Chrome ke top right corner me <strong>3 dots (⋮)</strong> menu par click karein.
-                </p>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-[#F0FDF4] border border-[#86EFAC] space-y-1">
-                <div className="font-bold text-[#166534] text-xs flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-[#16A34A] text-white flex items-center justify-center text-[10px]">3</span>
-                  <span>Tap "Install app" (या "Add to Home screen")</span>
+              {/* Step 2: Select Install App */}
+              <div className="p-3.5 rounded-2xl bg-[#F0FDF4] border-2 border-[#16A34A] space-y-2 shadow-xs">
+                <div className="flex items-center justify-between">
+                  <div className="font-bold text-[#166534] text-xs flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-[#16A34A] text-white flex items-center justify-center text-[10px] font-mono-code">2</span>
+                    <span>"Install app" (या "Add to Home screen") select karein</span>
+                  </div>
+                  <div className="p-1 rounded-lg bg-[#16A34A] text-white flex items-center justify-center">
+                    <Download className="w-4 h-4 text-white" />
+                  </div>
                 </div>
                 <p className="text-[#15803D] text-[11px] pl-7">
-                  Menu me <strong>"Install app"</strong> par click karein. Yeh app phone ke home screen aur app list me direct download ho jayegi!
+                  Menu me <strong>"Install app"</strong> ya <strong>"Add to Home screen"</strong> option par tap karein.
+                </p>
+              </div>
+
+              {/* Step 3: Confirmation */}
+              <div className="p-3.5 rounded-2xl bg-[#F9FAFB] border border-[#E5E5E5] space-y-1">
+                <div className="font-bold text-[#111111] text-xs flex items-center gap-2">
+                  <span className="w-5 h-5 rounded-full bg-[#111111] text-white flex items-center justify-center text-[10px] font-mono-code">3</span>
+                  <span>"Install" par tap karein</span>
+                </div>
+                <p className="text-[#666666] text-[11px] pl-7">
+                  App aapke mobile ke <strong>Home Screen</strong> aur <strong>Apps list</strong> me direct download ho jayegi aur <strong>100% Offline</strong> chalegi!
                 </p>
               </div>
             </div>
           )}
 
-          {/* iPhone Steps (Exact Safari UI Walkthrough) */}
+          {/* IPHONE (IOS) STEP BY STEP INSTRUCTIONS */}
           {deviceType === 'ios' && (
             <div className="space-y-2.5 text-xs text-[#333333]">
-              <div className="p-3.5 rounded-2xl bg-[#F9FAFB] border border-[#E5E5E5] space-y-1">
-                <div className="font-bold text-[#111111] text-xs flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-[#007AFF] text-white flex items-center justify-center text-[10px]">1</span>
-                  <span>Open in Safari Browser</span>
+              <div className="p-3.5 rounded-2xl bg-[#FFFFFF] border-2 border-[#007AFF] space-y-2 shadow-xs">
+                <div className="flex items-center justify-between">
+                  <div className="font-bold text-[#007AFF] text-xs flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-[#007AFF] text-white flex items-center justify-center text-[10px] font-mono-code">1</span>
+                    <span>Safari ke bottom me Share icon ( ⎋ ) dabayein</span>
+                  </div>
+                  <div className="p-1 rounded-lg bg-[#007AFF] text-white flex items-center justify-center">
+                    <Share2 className="w-4 h-4 text-white" />
+                  </div>
                 </div>
                 <p className="text-[#666666] text-[11px] pl-7">
-                  Link ko iPhone ke <strong>Safari</strong> browser me open karein.
+                  Safari ke bottom toolbar me <strong>Share button</strong> par click karein.
                 </p>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-[#F9FAFB] border border-[#E5E5E5] space-y-1">
-                <div className="font-bold text-[#111111] text-xs flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-[#007AFF] text-white flex items-center justify-center text-[10px]">2</span>
-                  <span>Tap Share Button ( ⎋ ) at bottom</span>
-                </div>
-                <p className="text-[#666666] text-[11px] pl-7">
-                  Safari ke bottom toolbar me <strong>Share</strong> button (बॉक्स से निकलता तीर) dabayein.
-                </p>
-              </div>
-
-              <div className="p-3.5 rounded-2xl bg-[#F0FDF4] border border-[#86EFAC] space-y-1">
-                <div className="font-bold text-[#166534] text-xs flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-[#16A34A] text-white flex items-center justify-center text-[10px]">3</span>
-                  <span>Tap "Add to Home Screen" (+)</span>
+              <div className="p-3.5 rounded-2xl bg-[#F0FDF4] border-2 border-[#16A34A] space-y-2 shadow-xs">
+                <div className="flex items-center justify-between">
+                  <div className="font-bold text-[#166534] text-xs flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-[#16A34A] text-white flex items-center justify-center text-[10px] font-mono-code">2</span>
+                    <span>"Add to Home Screen" (+) par tap karein</span>
+                  </div>
+                  <div className="p-1 rounded-lg bg-[#16A34A] text-white flex items-center justify-center">
+                    <PlusSquare className="w-4 h-4 text-white" />
+                  </div>
                 </div>
                 <p className="text-[#15803D] text-[11px] pl-7">
-                  Menu me scroll karke <strong>"Add to Home Screen"</strong> select karein aur top right me <strong>Add</strong> dabayein.
+                  Menu me neeche scroll karke <strong>"Add to Home Screen"</strong> chunein aur <strong>Add</strong> dabayein.
                 </p>
               </div>
             </div>
           )}
 
-          {/* Desktop Steps */}
+          {/* DESKTOP INSTRUCTIONS */}
           {deviceType === 'desktop' && (
             <div className="space-y-2.5 text-xs text-[#333333]">
-              <div className="p-3.5 rounded-2xl bg-[#F9FAFB] border border-[#E5E5E5] space-y-1">
+              <div className="p-3.5 rounded-2xl bg-[#F9FAFB] border border-[#E5E5E5] space-y-2">
                 <div className="font-bold text-[#111111] text-xs">
                   Chrome / Edge Address Bar Install:
                 </div>
                 <p className="text-[#666666] text-[11px]">
-                  Browser ke URL bar ke right side me <strong>Install icon (⊕)</strong> par click karein aur <strong>Install</strong> dabayein.
+                  Browser URL bar ke right side me <strong>Install icon (⊕)</strong> par click karein aur <strong>Install</strong> dabayein.
                 </p>
               </div>
             </div>
@@ -396,10 +407,10 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 bg-[#F9FAFB] border-t border-[#E5E5E5] flex items-center justify-between shrink-0">
+        <div className="p-3.5 sm:p-4 bg-[#F9FAFB] border-t border-[#E5E5E5] flex items-center justify-between shrink-0">
           <div className="text-[11px] text-[#666666] flex items-center gap-1.5 font-mono-code">
             <span className="w-2 h-2 rounded-full bg-[#16A34A] animate-pulse" />
-            <span>100% Offline Ready</span>
+            <span>PWA & Offline Ready</span>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -415,7 +426,7 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
               onClick={onClose}
               className="px-5 py-2 rounded-xl bg-[#111111] hover:bg-black text-white text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-95"
             >
-              Close
+              Got It
             </button>
           </div>
         </div>
