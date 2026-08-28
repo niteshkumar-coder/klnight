@@ -20,15 +20,18 @@ import {
   TimetableEntry,
   UserSettings,
 } from '../types';
+import { usePWAInstall } from '../lib/usePWAInstall';
 import { AttendanceSection } from './AttendanceSection';
 import { BottomNav } from './BottomNav';
 import { CoursesSection } from './CoursesSection';
 import { DayWiseTimetable } from './DayWiseTimetable';
 import { DebugModal } from './DebugModal';
 import { Header } from './Header';
+import { InstallAppBanner } from './InstallAppBanner';
 import { NextClassCard } from './NextClassCard';
 import { OfflineBanner } from './OfflineBanner';
 import { ProfileSection } from './ProfileSection';
+import { PWAInstallModal } from './PWAInstallModal';
 import { RoomModal } from './RoomModal';
 import { SearchAndFilterBar } from './SearchAndFilterBar';
 import { SettingsModal } from './SettingsModal';
@@ -136,6 +139,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, initialStudent }
   const [activeSubjectModal, setActiveSubjectModal] = useState<AttendanceRecord | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isDebugOpen, setIsDebugOpen] = useState(false);
+
+  // Progressive Web App (PWA) Install Management
+  const {
+    canPromptNative,
+    isInstalled,
+    isInstallModalOpen,
+    openInstallModal,
+    closeInstallModal,
+    triggerNativePrompt,
+  } = usePWAInstall();
 
   // Real system device clock loop (1-second tick)
   useEffect(() => {
@@ -351,7 +364,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, initialStudent }
 
   return (
     <div className="min-h-screen bg-[#FFFFFF] text-[#111111] flex flex-col font-sans">
-      {/* Top Header with Real-Time Clock */}
+      {/* Top Header with Real-Time Clock & App Install */}
       <Header
         student={student}
         lastSyncTime={lastSyncTime}
@@ -361,6 +374,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, initialStudent }
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenDebug={() => setIsDebugOpen(true)}
         onOpenProfile={() => setCurrentTab('profile')}
+        onOpenInstall={openInstallModal}
+        isInstalled={isInstalled}
         isMockMode={true}
       />
 
@@ -371,6 +386,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, initialStudent }
           currentTab={currentTab}
           onSelectTab={setCurrentTab}
           attendancePercent={attendance.overall.percentage}
+          onOpenInstall={openInstallModal}
+          isInstalled={isInstalled}
         />
 
         {/* Center Main Content Area */}
@@ -387,6 +404,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, initialStudent }
           {/* TAB 1: HOME (Dashboard Overview, Student Card, Next Class & Weekly Timetable) */}
           {currentTab === 'home' && (
             <div className="space-y-6">
+              {/* Install Mobile App / PWA Banner */}
+              <InstallAppBanner
+                onOpenModal={openInstallModal}
+                canPromptNative={canPromptNative}
+                onNativeInstall={triggerNativePrompt}
+                isInstalled={isInstalled}
+              />
+
               {/* Top Greeting */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1">
                 <div>
@@ -704,6 +729,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, initialStudent }
       {isDebugOpen && (
         <DebugModal onClose={() => setIsDebugOpen(false)} />
       )}
+
+      {/* Progressive Web App (PWA) Mobile Install Modal */}
+      <PWAInstallModal
+        isOpen={isInstallModalOpen}
+        onClose={closeInstallModal}
+        onInstallPrompt={triggerNativePrompt}
+        canPromptNative={canPromptNative}
+        isInstalled={isInstalled}
+      />
     </div>
   );
 };

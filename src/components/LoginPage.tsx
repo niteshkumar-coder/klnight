@@ -1,6 +1,20 @@
-import { ExternalLink, Eye, EyeOff, Linkedin, Lock, ShieldCheck, User } from 'lucide-react';
-import React, { useState } from 'react';
+import {
+  Download,
+  ExternalLink,
+  Eye,
+  EyeOff,
+  Linkedin,
+  Lock,
+  ShieldCheck,
+  Smartphone,
+  User,
+  WifiOff,
+} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { api } from '../lib/api';
+import { usePWAInstall } from '../lib/usePWAInstall';
 import { StudentProfile } from '../types';
+import { PWAInstallModal } from './PWAInstallModal';
 
 interface LoginPageProps {
   onLoginSuccess: (student: StudentProfile) => void;
@@ -22,6 +36,44 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onLoginSuccess })
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [cachedStudent, setCachedStudent] = useState<StudentProfile | null>(null);
+
+  const {
+    canPromptNative,
+    isInstalled,
+    isInstallModalOpen,
+    openInstallModal,
+    closeInstallModal,
+    triggerNativePrompt,
+  } = usePWAInstall();
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    const cached = api.getCachedData();
+    if (cached && cached.student) {
+      setCachedStudent(cached.student);
+      if (!universityId) {
+        setUniversityId(cached.student.universityId || cached.student.studentId || '');
+      }
+    }
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  const handleUseCachedProfile = () => {
+    if (cachedStudent) {
+      onLoginSuccess(cachedStudent);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,18 +117,27 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onLoginSuccess })
           className="h-12 sm:h-14 w-auto object-contain"
           referrerPolicy="no-referrer"
         />
-        <div className="mt-2.5 flex items-center justify-center">
+        <div className="mt-2.5 flex items-center justify-center gap-2 flex-wrap">
           <a
             href="https://www.linkedin.com/in/nitesh-kumar-27428a397?utm_source=share_via&utm_content=profile&utm_medium=member_android"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#0A66C2]/10 hover:bg-[#0A66C2]/20 text-[#0A66C2] text-xs font-mono-code font-bold transition-all border border-[#0A66C2]/25 shadow-2xs hover:scale-102"
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0A66C2]/10 hover:bg-[#0A66C2]/20 text-[#0A66C2] text-xs font-mono-code font-bold transition-all border border-[#0A66C2]/25 shadow-2xs hover:scale-102"
             title="Connect on LinkedIn (Nitesh Kumar)"
           >
             <Linkedin className="w-3.5 h-3.5" />
-            <span>Connect on LinkedIn</span>
+            <span>LinkedIn</span>
             <ExternalLink className="w-3 h-3 opacity-75" />
           </a>
+
+          <button
+            type="button"
+            onClick={openInstallModal}
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#111111] hover:bg-black text-white text-xs font-mono-code font-bold transition-all shadow-2xs cursor-pointer hover:scale-102"
+          >
+            <Download className="w-3.5 h-3.5 text-[#B8FF00]" />
+            <span>{isInstalled ? 'App Ready' : 'Download App'}</span>
+          </button>
         </div>
         <p className="text-xs sm:text-sm text-[#666666] font-medium tracking-wide mt-2">
           Student Academic Schedule & Real-Time Timetable
@@ -85,6 +146,28 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onLoginSuccess })
 
       {/* Main Login Card */}
       <main className="w-full max-w-md my-6">
+        {/* Offline Detection & Quick Access */}
+        {isOffline && (
+          <div className="mb-4 p-3.5 rounded-2xl bg-[#FEF2F2] border border-[#FCA5A5] flex items-center justify-between gap-3 text-xs font-mono-code shadow-xs">
+            <div className="flex items-center gap-2.5">
+              <WifiOff className="w-4 h-4 text-[#DC2626] shrink-0" />
+              <div>
+                <div className="font-bold text-[#111111]">OFFLINE MODE</div>
+                <div className="text-[11px] text-[#666666]">No internet connection detected.</div>
+              </div>
+            </div>
+            {cachedStudent && (
+              <button
+                type="button"
+                onClick={handleUseCachedProfile}
+                className="px-3 py-1.5 rounded-xl bg-[#111111] text-white hover:bg-black text-xs font-bold shrink-0 transition-transform active:scale-95 cursor-pointer"
+              >
+                OPEN TIMETABLE
+              </button>
+            )}
+          </div>
+        )}
+
         <div className="bg-[#FFFFFF] border border-[#E5E5E5] rounded-2xl p-6 sm:p-8 shadow-sm">
           {/* Heading */}
           <div className="mb-6 pb-4 border-b border-[#E5E5E5]">
@@ -267,6 +350,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onLoginSuccess })
           Academic schedule organizer & attendance tracker
         </p>
       </footer>
+
+      {/* PWA Mobile App Download & Install Modal */}
+      <PWAInstallModal
+        isOpen={isInstallModalOpen}
+        onClose={closeInstallModal}
+        onInstallPrompt={triggerNativePrompt}
+        canPromptNative={canPromptNative}
+        isInstalled={isInstalled}
+      />
     </div>
   );
 };

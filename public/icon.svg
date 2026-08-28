@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="128" fill="#111111"/>
+  <rect x="24" y="24" width="464" height="464" rx="104" fill="none" stroke="#262626" stroke-width="8"/>
+  <g transform="translate(64, 64)">
+    <!-- Shield / Schedule Glyph with Golden Green Accents -->
+    <path d="M192 32 L352 96 L352 240 C352 336 272 416 192 448 C112 416 32 336 32 240 L32 96 Z" fill="#1A1A1A" stroke="#B8FF00" stroke-width="12" stroke-linejoin="round"/>
+    <!-- Clock & Calendar Motif -->
+    <circle cx="192" cy="220" r="72" fill="#0D0D0D" stroke="#FFFFFF" stroke-width="10"/>
+    <polyline points="192,175 192,220 225,235" fill="none" stroke="#B8FF00" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- Graduation Star / Spark -->
+    <polygon points="192,80 205,115 240,115 212,135 222,170 192,150 162,170 172,135 144,115 179,115" fill="#B8FF00"/>
+  </g>
+  <text x="256" y="475" text-anchor="middle" fill="#B8FF00" font-family="sans-serif" font-weight="900" font-size="44" letter-spacing="4">KLNIGHT</text>
+</svg>

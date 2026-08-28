@@ -1,12 +1,16 @@
 import {
   Clock,
+  Download,
   ExternalLink,
   Linkedin,
   LogOut,
   RefreshCw,
   SlidersHorizontal,
+  Smartphone,
   Terminal,
   User,
+  Wifi,
+  WifiOff,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { StudentProfile } from '../types';
@@ -20,6 +24,8 @@ interface HeaderProps {
   onOpenSettings: () => void;
   onOpenDebug: () => void;
   onOpenProfile?: () => void;
+  onOpenInstall?: () => void;
+  isInstalled?: boolean;
   isMockMode?: boolean;
 }
 
@@ -32,10 +38,26 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenSettings,
   onOpenDebug,
   onOpenProfile,
+  onOpenInstall,
+  isInstalled = false,
   isMockMode = true,
 }) => {
   const [currentTimeFormatted, setCurrentTimeFormatted] = useState<string>('');
   const [greeting, setGreeting] = useState<string>('Good morning');
+  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     const updateTime = () => {
@@ -119,6 +141,43 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Right: Actions */}
         <div className="flex items-center justify-end gap-2 sm:gap-2.5">
+          {/* Online/Offline status pill */}
+          <div
+            className={`hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono-code font-bold border ${
+              isOnline
+                ? 'bg-[#F0FDF4] text-[#166534] border-[#BBF7D0]'
+                : 'bg-[#FEF2F2] text-[#991B1B] border-[#FECACA]'
+            }`}
+            title={isOnline ? 'Online - Connected' : 'Offline - Using cached data'}
+          >
+            {isOnline ? (
+              <>
+                <span className="w-1.5 h-1.5 rounded-full bg-[#16A34A] animate-pulse" />
+                <span>ONLINE</span>
+              </>
+            ) : (
+              <>
+                <WifiOff className="w-3 h-3 text-[#DC2626]" />
+                <span>OFFLINE</span>
+              </>
+            )}
+          </div>
+
+          {/* Download / Install App button */}
+          {onOpenInstall && (
+            <button
+              id="btn-header-install-app"
+              type="button"
+              onClick={onOpenInstall}
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-[#111111] hover:bg-black text-white text-xs font-bold font-mono-code transition-all shadow-xs cursor-pointer active:scale-95"
+              title="Download & Install Mobile App (Add to Home Screen)"
+            >
+              <Download className="w-3.5 h-3.5 text-[#B8FF00]" />
+              <span className="hidden sm:inline">{isInstalled ? 'APP INSTALLED' : 'GET APP'}</span>
+              <span className="sm:hidden">APP</span>
+            </button>
+          )}
+
           {/* Sync Button */}
           <button
             id="btn-sync-timetable"

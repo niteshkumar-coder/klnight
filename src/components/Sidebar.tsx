@@ -2,10 +2,12 @@ import {
   BookOpen,
   Calendar,
   CheckCircle2,
+  Download,
   ExternalLink,
   Home,
   Linkedin,
   Settings,
+  Smartphone,
   User,
 } from 'lucide-react';
 import React from 'react';
@@ -16,12 +18,16 @@ interface SidebarProps {
   currentTab: NavTab;
   onSelectTab: (tab: NavTab) => void;
   attendancePercent?: number;
+  onOpenInstall?: () => void;
+  isInstalled?: boolean;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   currentTab,
   onSelectTab,
   attendancePercent = 86.4,
+  onOpenInstall,
+  isInstalled = false,
 }) => {
   const navItems = [
     {
@@ -159,8 +165,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </nav>
       </div>
 
-      {/* Academic Term Info */}
+      {/* Academic Term Info & Install App */}
       <div className="mt-auto pt-4 border-t border-[#E5E5E5] space-y-2">
+        {onOpenInstall && (
+          <button
+            type="button"
+            onClick={onOpenInstall}
+            className="w-full flex items-center justify-between p-2.5 rounded-xl bg-[#111111] hover:bg-black text-white text-xs font-mono-code transition-all shadow-xs cursor-pointer group"
+          >
+            <span className="flex items-center gap-2 font-bold">
+              <Download className="w-3.5 h-3.5 text-[#B8FF00] group-hover:animate-bounce" />
+              <span>{isInstalled ? 'APP INSTALLED' : 'GET MOBILE APP'}</span>
+            </span>
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#B8FF00] text-black">
+              PWA
+            </span>
+          </button>
+        )}
+
         <div className="p-3 rounded-xl bg-[#F9FAFB] border border-[#E5E5E5]">
           <div className="flex items-center justify-between text-[10px] text-[#666666] font-mono-code font-bold mb-1">
             <span>ACADEMIC STATUS</span>
