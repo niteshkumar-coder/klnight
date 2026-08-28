@@ -1,15 +1,18 @@
 import {
-  Clock,
-  MapPin,
-  Sparkles,
-  User,
+  AlertCircle,
   Calendar,
   CheckCircle2,
-  AlertCircle
+  Clock,
+  Hourglass,
+  MapPin,
+  Sparkles,
+  Timer,
+  User,
+  Zap,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import { TimetableEntry } from '../types';
 import { formatTime12, getClassTypeLabel } from '../lib/erp/normalizers';
+import { TimetableEntry } from '../types';
 
 interface NextClassCardProps {
   status: 'live_now' | 'upcoming' | 'completed_for_today' | 'no_classes_today' | 'loading';
@@ -21,6 +24,15 @@ interface NextClassCardProps {
   onViewSchedule?: () => void;
 }
 
+interface CountdownState {
+  hours: string;
+  minutes: string;
+  seconds: string;
+  totalSeconds: number;
+  progressPercent: number;
+  isZero: boolean;
+}
+
 export const NextClassCard: React.FC<NextClassCardProps> = ({
   status,
   currentClass,
@@ -30,60 +42,143 @@ export const NextClassCard: React.FC<NextClassCardProps> = ({
   onOpenRoom,
   onViewSchedule,
 }) => {
-  // Live local second-by-second countdown calculation
-  const [countdown, setCountdown] = useState<{
-    hours: string;
-    minutes: string;
-    seconds: string;
-    isZero: boolean;
-  }>({
+  // Live continuous second-by-second countdown calculation (Ulta timing)
+  const [countdown, setCountdown] = useState<CountdownState>({
     hours: '00',
     minutes: '00',
     seconds: '00',
+    totalSeconds: 0,
+    progressPercent: 0,
     isZero: false,
   });
 
   useEffect(() => {
-    if (status !== 'upcoming' || !nextClass) {
-      return;
-    }
-
-    const calculateTimeRemaining = () => {
+    const calculateCountdown = () => {
       const now = new Date();
-      const [startH, startM] = nextClass.startTime.split(':').map(Number);
-      
-      const target = new Date();
-      target.setHours(startH, startM, 0, 0);
 
-      const diffMs = target.getTime() - now.getTime();
+      // Scenario 1: Class is Live Now -> Countdown until class ENDS
+      if (status === 'live_now' && currentClass) {
+        const [startH, startM] = currentClass.startTime.split(':').map(Number);
+        const [endH, endM] = currentClass.endTime.split(':').map(Number);
 
-      if (diffMs <= 0) {
+        const startTimeDate = new Date();
+        startTimeDate.setHours(startH, startM, 0, 0);
+
+        const endTimeDate = new Date();
+        endTimeDate.setHours(endH, endM, 0, 0);
+
+        const totalDurationMs = Math.max(1, endTimeDate.getTime() - startTimeDate.getTime());
+        const remainingMs = endTimeDate.getTime() - now.getTime();
+
+        if (remainingMs <= 0) {
+          setCountdown({
+            hours: '00',
+            minutes: '00',
+            seconds: '00',
+            totalSeconds: 0,
+            progressPercent: 100,
+            isZero: true,
+          });
+          return;
+        }
+
+        const elapsedMs = totalDurationMs - remainingMs;
+        const progress = Math.min(100, Math.max(0, (elapsedMs / totalDurationMs) * 100));
+
+        const totalSec = Math.floor(remainingMs / 1000);
+        const h = Math.floor(totalSec / 3600);
+        const m = Math.floor((totalSec % 3600) / 60);
+        const s = totalSec % 60;
+
         setCountdown({
-          hours: '00',
-          minutes: '00',
-          seconds: '00',
-          isZero: true,
+          hours: h.toString().padStart(2, '0'),
+          minutes: m.toString().padStart(2, '0'),
+          seconds: s.toString().padStart(2, '0'),
+          totalSeconds: totalSec,
+          progressPercent: Math.round(progress),
+          isZero: false,
         });
         return;
       }
 
-      const totalSeconds = Math.floor(diffMs / 1000);
-      const hours = Math.floor(totalSeconds / 3600);
-      const minutes = Math.floor((totalSeconds % 3600) / 60);
-      const seconds = totalSeconds % 60;
+      // Scenario 2: Upcoming Class Today -> Countdown until class STARTS
+      if (status === 'upcoming' && nextClass) {
+        const [startH, startM] = nextClass.startTime.split(':').map(Number);
+        const target = new Date();
+        target.setHours(startH, startM, 0, 0);
 
+        const diffMs = target.getTime() - now.getTime();
+
+        if (diffMs <= 0) {
+          setCountdown({
+            hours: '00',
+            minutes: '00',
+            seconds: '00',
+            totalSeconds: 0,
+            progressPercent: 0,
+            isZero: true,
+          });
+          return;
+        }
+
+        const totalSec = Math.floor(diffMs / 1000);
+        const h = Math.floor(totalSec / 3600);
+        const m = Math.floor((totalSec % 3600) / 60);
+        const s = totalSec % 60;
+
+        setCountdown({
+          hours: h.toString().padStart(2, '0'),
+          minutes: m.toString().padStart(2, '0'),
+          seconds: s.toString().padStart(2, '0'),
+          totalSeconds: totalSec,
+          progressPercent: 0,
+          isZero: false,
+        });
+        return;
+      }
+
+      // Scenario 3: Completed for today or No classes today -> Countdown to Tomorrow's class
+      if (nextClassTomorrow) {
+        const [startH, startM] = nextClassTomorrow.entry.startTime.split(':').map(Number);
+        const target = new Date();
+        target.setDate(target.getDate() + 1);
+        target.setHours(startH, startM, 0, 0);
+
+        const diffMs = target.getTime() - now.getTime();
+
+        if (diffMs > 0) {
+          const totalSec = Math.floor(diffMs / 1000);
+          const h = Math.floor(totalSec / 3600);
+          const m = Math.floor((totalSec % 3600) / 60);
+          const s = totalSec % 60;
+
+          setCountdown({
+            hours: h.toString().padStart(2, '0'),
+            minutes: m.toString().padStart(2, '0'),
+            seconds: s.toString().padStart(2, '0'),
+            totalSeconds: totalSec,
+            progressPercent: 0,
+            isZero: false,
+          });
+          return;
+        }
+      }
+
+      // Default state
       setCountdown({
-        hours: hours.toString().padStart(2, '0'),
-        minutes: minutes.toString().padStart(2, '0'),
-        seconds: seconds.toString().padStart(2, '0'),
-        isZero: false,
+        hours: '00',
+        minutes: '00',
+        seconds: '00',
+        totalSeconds: 0,
+        progressPercent: 0,
+        isZero: true,
       });
     };
 
-    calculateTimeRemaining();
-    const interval = setInterval(calculateTimeRemaining, 1000);
-    return () => clearInterval(interval);
-  }, [status, nextClass]);
+    calculateCountdown();
+    const timerInterval = setInterval(calculateCountdown, 1000);
+    return () => clearInterval(timerInterval);
+  }, [status, currentClass, nextClass, nextClassTomorrow]);
 
   if (status === 'loading') {
     return (
@@ -95,18 +190,19 @@ export const NextClassCard: React.FC<NextClassCardProps> = ({
     );
   }
 
-  // --- 1. CLASS IS LIVE NOW ---
+  // --- 1. CLASS IS LIVE NOW (WITH LIVE REVERSE COUNTDOWN & PROGRESS BAR) ---
   if (status === 'live_now' && currentClass) {
     return (
-      <div className="w-full bg-[#FFFFFF] border-2 border-[#111111] rounded-2xl p-5 sm:p-6 shadow-sm relative">
+      <div className="w-full bg-[#FFFFFF] border-2 border-[#111111] rounded-2xl p-5 sm:p-6 shadow-md relative overflow-hidden">
+        {/* Top Header */}
         <div className="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-[#E5E5E5]">
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#111111] text-[#FFFFFF] text-xs font-bold font-mono-code">
-              <span className="w-2 h-2 rounded-full bg-[#22C55E]" />
-              ● NOW
+              <span className="w-2 h-2 rounded-full bg-[#22C55E] animate-ping" />
+              ● LIVE NOW
             </span>
             <span className="text-xs font-bold text-[#111111] uppercase tracking-wide">
-              CLASS IS LIVE
+              CLASS IN PROGRESS
             </span>
           </div>
 
@@ -118,62 +214,110 @@ export const NextClassCard: React.FC<NextClassCardProps> = ({
           </div>
         </div>
 
-        <div className="space-y-3">
-          <div>
-            <span className="text-[11px] font-bold text-[#666666] uppercase tracking-wider block mb-1">
-              CURRENT COURSE
-            </span>
-            <h3 className="text-xl sm:text-2xl font-bold text-[#111111] font-display leading-tight">
-              {currentClass.courseName}
-            </h3>
+        {/* Content & Reverse Countdown Grid */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+          <div className="space-y-3 max-w-xl">
+            <div>
+              <span className="text-[11px] font-bold text-[#666666] uppercase tracking-wider block mb-1">
+                CURRENT COURSE
+              </span>
+              <h3 className="text-xl sm:text-2xl font-bold text-[#111111] font-display leading-tight">
+                {currentClass.courseName}
+              </h3>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5 pt-1">
+              {/* Clickable Room */}
+              <button
+                type="button"
+                onClick={() => onOpenRoom(currentClass.room)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#111111] text-[#FFFFFF] hover:bg-[#2A2A2A] text-xs font-bold font-mono-code transition-colors cursor-pointer shadow-xs"
+                title="Click to view room information and map"
+              >
+                <MapPin className="w-3.5 h-3.5 text-[#B8FF00]" />
+                <span>Room {currentClass.room}</span>
+              </button>
+
+              {/* Class Type & Code */}
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F9FAFB] border border-[#E5E5E5] text-xs font-mono-code text-[#111111]">
+                <span className="font-bold">{getClassTypeLabel(currentClass.classType)}</span>
+                <span className="text-[#9CA3AF]">·</span>
+                <span className="text-[#666666]">{currentClass.courseCode}</span>
+              </div>
+
+              {/* Day badge */}
+              <div className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#F3F4F6] text-xs font-medium text-[#666666]">
+                <Calendar className="w-3.5 h-3.5" />
+                <span>{day}</span>
+              </div>
+
+              {currentClass.faculty && (
+                <div className="hidden sm:inline-flex items-center gap-1.5 text-xs text-[#666666] ml-auto">
+                  <User className="w-3.5 h-3.5 text-[#9CA3AF]" />
+                  <span>{currentClass.faculty}</span>
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5 pt-1">
-            {/* Clickable Room */}
-            <button
-              type="button"
-              onClick={() => onOpenRoom(currentClass.room)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#111111] text-[#FFFFFF] hover:bg-[#2A2A2A] text-xs font-bold font-mono-code transition-colors cursor-pointer"
-              title="Click to view room information and map"
-            >
-              <MapPin className="w-3.5 h-3.5 text-[#FFFFFF]" />
-              <span>Room {currentClass.room}</span>
-            </button>
-
-            {/* Class Type & Code */}
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F9FAFB] border border-[#E5E5E5] text-xs font-mono-code text-[#111111]">
-              <span className="font-bold">{getClassTypeLabel(currentClass.classType)}</span>
-              <span className="text-[#9CA3AF]">·</span>
-              <span className="text-[#666666]">{currentClass.courseCode}</span>
+          {/* LIVE ULTA COUNTDOWN BOX (CLASS ENDS IN) */}
+          <div className="bg-[#111111] text-white border border-[#222222] rounded-xl p-4 shrink-0 flex flex-col items-center justify-center min-w-[230px] shadow-sm">
+            <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-widest text-[#B8FF00] uppercase mb-1.5 font-mono-code">
+              <Hourglass className="w-3.5 h-3.5 animate-spin" />
+              <span>CLASS ENDS IN (उलटा टाइम)</span>
             </div>
 
-            {/* Day badge */}
-            <div className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#F3F4F6] text-xs font-medium text-[#666666]">
-              <Calendar className="w-3.5 h-3.5" />
-              <span>{day}</span>
+            {/* HH : MM : SS (Ticking live seconds) */}
+            <div className="flex items-center gap-1 font-mono-code text-2xl sm:text-3xl font-extrabold text-[#FFFFFF] tracking-tight">
+              <span className="bg-[#1C1C1C] px-2 py-1 rounded border border-white/10 shadow-xs min-w-[42px] text-center">
+                {countdown.hours}
+              </span>
+              <span className="text-[#B8FF00] text-lg font-bold animate-pulse">:</span>
+              <span className="bg-[#1C1C1C] px-2 py-1 rounded border border-white/10 shadow-xs min-w-[42px] text-center">
+                {countdown.minutes}
+              </span>
+              <span className="text-[#B8FF00] text-lg font-bold animate-pulse">:</span>
+              <span className="bg-[#1C1C1C] px-2 py-1 rounded border border-white/10 shadow-xs min-w-[42px] text-center text-[#B8FF00]">
+                {countdown.seconds}
+              </span>
             </div>
 
-            {currentClass.faculty && (
-              <div className="hidden sm:inline-flex items-center gap-1.5 text-xs text-[#666666] ml-auto">
-                <User className="w-3.5 h-3.5 text-[#9CA3AF]" />
-                <span>{currentClass.faculty}</span>
+            {/* Labels: HRS  MINS  SECS */}
+            <div className="flex items-center justify-between w-full px-2 mt-1 text-[9px] font-bold text-[#A3A3A3] font-mono-code">
+              <span>HRS</span>
+              <span className="pl-1">MINS</span>
+              <span>SECS</span>
+            </div>
+
+            {/* Progress bar */}
+            <div className="w-full mt-2.5 pt-2 border-t border-white/10">
+              <div className="flex justify-between text-[10px] text-[#A3A3A3] font-mono-code mb-1">
+                <span>Elapsed</span>
+                <span className="text-[#B8FF00] font-bold">{countdown.progressPercent}%</span>
               </div>
-            )}
+              <div className="w-full h-1.5 bg-[#262626] rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[#B8FF00] transition-all duration-1000"
+                  style={{ width: `${countdown.progressPercent}%` }}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
-  // --- 2. UPCOMING NEXT CLASS WITH LIVE SECOND-BY-SECOND COUNTDOWN ---
+  // --- 2. UPCOMING NEXT CLASS WITH LIVE SECOND-BY-SECOND ULTA COUNTDOWN ---
   if (status === 'upcoming' && nextClass) {
     return (
       <div className="w-full bg-[#FFFFFF] border border-[#E5E5E5] rounded-2xl p-5 sm:p-6 shadow-sm">
         {/* Header Row */}
         <div className="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-[#E5E5E5]">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-bold font-mono-code tracking-wider uppercase bg-[#F3F4F6] text-[#111111] px-3 py-1 rounded-full border border-[#E5E5E5]">
-              NEXT CLASS
+            <span className="text-xs font-bold font-mono-code tracking-wider uppercase bg-[#F3F4F6] text-[#111111] px-3 py-1 rounded-full border border-[#E5E5E5] flex items-center gap-1.5">
+              <Timer className="w-3.5 h-3.5 text-[#111111]" />
+              <span>NEXT CLASS</span>
             </span>
             <span className="text-xs text-[#666666] font-medium">{day}</span>
           </div>
@@ -191,6 +335,9 @@ export const NextClassCard: React.FC<NextClassCardProps> = ({
           {/* Course Details */}
           <div className="space-y-3 max-w-xl">
             <div>
+              <span className="text-[11px] font-bold text-[#666666] uppercase tracking-wider block mb-1">
+                UPCOMING LECTURE
+              </span>
               <h3 className="text-xl sm:text-2xl font-bold text-[#111111] font-display leading-tight">
                 {nextClass.courseName}
               </h3>
@@ -201,10 +348,10 @@ export const NextClassCard: React.FC<NextClassCardProps> = ({
               <button
                 type="button"
                 onClick={() => onOpenRoom(nextClass.room)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#111111] text-[#FFFFFF] hover:bg-[#2A2A2A] text-xs font-bold font-mono-code transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#111111] text-[#FFFFFF] hover:bg-[#2A2A2A] text-xs font-bold font-mono-code transition-colors cursor-pointer shadow-xs"
                 title="Click to view room details"
               >
-                <MapPin className="w-3.5 h-3.5 text-[#FFFFFF]" />
+                <MapPin className="w-3.5 h-3.5 text-[#B8FF00]" />
                 <span>Room {nextClass.room}</span>
               </button>
 
@@ -224,23 +371,24 @@ export const NextClassCard: React.FC<NextClassCardProps> = ({
             </div>
           </div>
 
-          {/* LIVE REAL-TIME COUNTDOWN BOX */}
-          <div className="bg-[#F9FAFB] border border-[#E5E5E5] rounded-xl p-3.5 sm:p-4 shrink-0 flex flex-col items-center justify-center min-w-[220px]">
-            <div className="text-[10px] font-bold tracking-widest text-[#666666] uppercase mb-1.5 font-mono-code">
-              STARTS IN
+          {/* LIVE REAL-TIME COUNTDOWN BOX (STARTS IN) */}
+          <div className="bg-[#F9FAFB] border border-[#E5E5E5] rounded-xl p-3.5 sm:p-4 shrink-0 flex flex-col items-center justify-center min-w-[230px]">
+            <div className="flex items-center gap-1.5 text-[10px] font-bold tracking-widest text-[#666666] uppercase mb-1.5 font-mono-code">
+              <Hourglass className="w-3 h-3 text-[#111111]" />
+              <span>STARTS IN (उलटा टाइमिंग)</span>
             </div>
 
-            {/* HH : MM : SS */}
+            {/* HH : MM : SECS (Live ticking) */}
             <div className="flex items-center gap-1 font-mono-code text-2xl sm:text-3xl font-extrabold text-[#111111] tracking-tight">
               <span className="bg-[#FFFFFF] px-2 py-1 rounded border border-[#E5E5E5] shadow-2xs min-w-[42px] text-center">
                 {countdown.hours}
               </span>
-              <span className="text-[#666666] text-lg font-bold">:</span>
+              <span className="text-[#666666] text-lg font-bold animate-pulse">:</span>
               <span className="bg-[#FFFFFF] px-2 py-1 rounded border border-[#E5E5E5] shadow-2xs min-w-[42px] text-center">
                 {countdown.minutes}
               </span>
-              <span className="text-[#666666] text-lg font-bold">:</span>
-              <span className="bg-[#FFFFFF] px-2 py-1 rounded border border-[#E5E5E5] shadow-2xs min-w-[42px] text-center">
+              <span className="text-[#666666] text-lg font-bold animate-pulse">:</span>
+              <span className="bg-[#FFFFFF] px-2 py-1 rounded border border-[#E5E5E5] shadow-2xs min-w-[42px] text-center text-[#16A34A]">
                 {countdown.seconds}
               </span>
             </div>
@@ -257,11 +405,11 @@ export const NextClassCard: React.FC<NextClassCardProps> = ({
     );
   }
 
-  // --- 3. NO MORE CLASSES TODAY / FREE DAY ---
+  // --- 3. NO MORE CLASSES TODAY / TOMORROW PREVIEW WITH COUNTDOWN ---
   return (
-    <div className="w-full bg-[#FFFFFF] border border-[#E5E5E5] rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+    <div className="w-full bg-[#FFFFFF] border border-[#E5E5E5] rounded-2xl p-5 sm:p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
       <div className="flex items-start sm:items-center gap-3.5">
-        <div className="w-10 h-10 rounded-xl bg-[#F3F4F6] border border-[#E5E5E5] flex items-center justify-center text-xl shrink-0">
+        <div className="w-11 h-11 rounded-xl bg-[#F3F4F6] border border-[#E5E5E5] flex items-center justify-center text-2xl shrink-0">
           🎉
         </div>
         <div>
@@ -279,22 +427,31 @@ export const NextClassCard: React.FC<NextClassCardProps> = ({
       </div>
 
       {nextClassTomorrow && (
-        <div className="w-full md:w-auto p-3 rounded-xl bg-[#F9FAFB] border border-[#E5E5E5] text-xs font-mono-code flex items-center justify-between gap-3 shrink-0">
-          <div>
-            <span className="text-[#666666] block text-[10px] uppercase font-bold">
-              NEXT CLASS TOMORROW ({nextClassTomorrow.day.toUpperCase()}):
-            </span>
-            <span className="text-[#111111] font-bold">
-              {formatTime12(nextClassTomorrow.entry.startTime)} – {formatTime12(nextClassTomorrow.entry.endTime)}
-            </span>
-            <span className="text-[#666666] ml-1.5 font-sans font-medium">
-              ({nextClassTomorrow.entry.courseName.split(' ')[0]} in Room {nextClassTomorrow.entry.room})
-            </span>
+        <div className="w-full md:w-auto p-3.5 rounded-xl bg-[#F9FAFB] border border-[#E5E5E5] text-xs font-mono-code flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-[#666666] text-[10px] uppercase font-bold">
+                NEXT CLASS ({nextClassTomorrow.day.toUpperCase()}):
+              </span>
+              <span className="text-[#111111] font-bold">
+                {formatTime12(nextClassTomorrow.entry.startTime)} – {formatTime12(nextClassTomorrow.entry.endTime)}
+              </span>
+            </div>
+            <div className="text-[#666666] text-xs font-sans font-medium">
+              {nextClassTomorrow.entry.courseName} (Room {nextClassTomorrow.entry.room})
+            </div>
+            {countdown.totalSeconds > 0 && (
+              <div className="text-[11px] font-mono-code font-bold text-[#16A34A] flex items-center gap-1 pt-0.5">
+                <Hourglass className="w-3 h-3 text-[#16A34A]" />
+                <span>Starts in {countdown.hours}h {countdown.minutes}m {countdown.seconds}s</span>
+              </div>
+            )}
           </div>
+
           <button
             type="button"
             onClick={() => onOpenRoom(nextClassTomorrow.entry.room)}
-            className="px-2.5 py-1 rounded bg-[#111111] hover:bg-[#2A2A2A] text-[11px] text-[#FFFFFF] font-bold cursor-pointer transition-colors"
+            className="self-start sm:self-center px-3 py-1.5 rounded-lg bg-[#111111] hover:bg-[#2A2A2A] text-xs text-[#FFFFFF] font-bold cursor-pointer transition-colors shadow-2xs"
           >
             Room {nextClassTomorrow.entry.room}
           </button>

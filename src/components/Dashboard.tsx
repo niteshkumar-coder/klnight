@@ -697,6 +697,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, initialStudent }
         currentTab={currentTab}
         onSelectTab={setCurrentTab}
         attendancePercent={attendance.overall.percentage}
+        onOpenInstall={openInstallModal}
+        isInstalled={isInstalled}
       />
 
       {/* Classroom Details Modal */}
