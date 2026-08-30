@@ -111,9 +111,14 @@ export const WeeklyGridCalendar: React.FC<WeeklyGridCalendarProps> = ({
             {FIXED_SLOTS.map((slot) => (
               <tr key={slot.slot} className="hover:bg-[#F9FAFB] transition-colors">
                 {/* Slot Time Column */}
-                <td className="py-3 px-3 font-mono-code text-[11px] text-[#666666] bg-[#FAFAFA] border-r border-[#E5E5E5]">
-                  <div className="font-bold text-[#111111]">Slot {slot.slot}</div>
-                  <div className="text-[10px] text-[#888888]">{formatTime12(slot.startTime)}</div>
+                <td className="py-3 px-3 font-mono-code text-xs text-[#111111] bg-[#F9FAFB] border-r border-[#E5E5E5]">
+                  <div className="font-black text-[#111111]">Slot {slot.slot}</div>
+                  <div className="text-[11px] font-extrabold text-[#333333] mt-0.5">
+                    {formatTime12(slot.startTime)}
+                  </div>
+                  <div className="text-[9.5px] font-medium text-[#777777]">
+                    to {formatTime12(slot.endTime)}
+                  </div>
                 </td>
 
                 {/* Day Columns */}

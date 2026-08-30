@@ -232,19 +232,19 @@ export const DayWiseTimetable: React.FC<DayWiseTimetableProps> = ({
                     {/* Left details: Time, Course, Code & Type */}
                     <div className="space-y-1.5">
                       {/* Time & Live Indicator */}
-                      <div className="flex items-center gap-2">
-                        <div className="text-sm sm:text-base font-bold font-mono-code text-[#111111]">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <div className="text-sm sm:text-base font-black font-mono-code text-[#111111] bg-[#F3F4F6] px-3 py-1 rounded-xl border border-[#D1D5DB] shadow-2xs">
                           {formatTime12(item.startTime)} – {formatTime12(item.endTime)}
                         </div>
 
                         {isLive && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#111111] text-[#FFFFFF] text-[10px] font-bold font-mono-code">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#22C55E]" />
-                            ● NOW
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#16A34A] text-[#FFFFFF] text-xs font-black font-mono-code shadow-xs animate-pulse">
+                            <span className="w-2 h-2 rounded-full bg-[#FFFFFF]" />
+                            ● LIVE NOW
                           </span>
                         )}
 
-                        <span className="text-[10px] text-[#888888] font-mono-code">
+                        <span className="text-xs text-[#555555] font-mono-code font-bold bg-[#FFFFFF] px-2 py-0.5 rounded border border-[#E5E5E5]">
                           Slot {item.slot}
                         </span>
                       </div>

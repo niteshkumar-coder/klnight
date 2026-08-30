@@ -135,29 +135,29 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Mobile Clock & Date */}
           <div className="md:hidden flex items-center gap-1.5">
             {isSundayToday && (
-              <span className="px-1.5 py-0.5 rounded bg-[#FEF3C7] border border-[#FDE68A] text-[#92400E] text-[10px] font-mono-code font-bold">
-                HOLIDAY
+              <span className="px-2 py-1 rounded-lg bg-[#FEF3C7] border border-[#FDE68A] text-[#92400E] text-[11px] font-mono-code font-extrabold shadow-2xs">
+                🏖️ SUNDAY HOLIDAY
               </span>
             )}
-            <div className="px-2.5 py-1 rounded-lg bg-[#F9FAFB] border border-[#E5E5E5] text-[11px] font-mono-code text-[#111111] font-bold">
+            <div className="px-3 py-1 rounded-xl bg-[#111111] text-[#FFFFFF] text-xs font-mono-code font-black shadow-xs">
               {currentTimeFormatted}
             </div>
           </div>
         </div>
 
-        {/* Center: REAL-TIME CURRENT TIME CLOCK (updates every second) & DATE */}
-        <div className="hidden md:flex items-center gap-2.5">
-          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#F9FAFB] border border-[#E5E5E5] text-xs font-mono-code shadow-2xs">
-            <Clock className="w-3.5 h-3.5 text-[#666666]" />
-            <span className="text-[#666666] font-medium">{currentDateFormatted}:</span>
-            <span className="font-bold text-[#111111] tracking-wide">
+        {/* Center: REAL-TIME CURRENT TIME CLOCK (Bold & Crystal Clear) & SUNDAY STATUS */}
+        <div className="hidden md:flex items-center gap-3">
+          <div className="flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-[#FFFFFF] border-2 border-[#111111] text-xs font-mono-code shadow-xs">
+            <Clock className="w-4 h-4 text-[#111111]" />
+            <span className="text-[#555555] font-semibold">{currentDateFormatted}:</span>
+            <span className="font-black text-sm text-[#111111] tracking-wider bg-[#F3F4F6] px-2 py-0.5 rounded-lg border border-[#E5E5E5]">
               {currentTimeFormatted || '12:00:00 PM'}
             </span>
           </div>
 
           {isSundayToday && (
-            <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#FEF3C7] border border-[#FDE68A] text-xs font-mono-code font-bold text-[#92400E]">
-              <span>🏖️ SUNDAY HOLIDAY (छुट्टी)</span>
+            <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-[#FEF3C7] border-2 border-[#FDE68A] text-xs font-mono-code font-extrabold text-[#92400E] shadow-2xs animate-pulse">
+              <span>🏖️ TODAY IS SUNDAY · WEEKLY HOLIDAY (आज रविवार की छुट्टी है)</span>
             </div>
           )}
         </div>

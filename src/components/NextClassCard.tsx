@@ -328,8 +328,8 @@ export const NextClassCard: React.FC<NextClassCardProps> = ({
             <span className="text-xs text-[#666666] font-medium">{day}</span>
           </div>
 
-          <div className="text-xs font-mono-code font-bold text-[#111111] bg-[#F9FAFB] px-3 py-1 rounded-lg border border-[#E5E5E5] flex items-center gap-1.5">
-            <Clock className="w-3.5 h-3.5 text-[#666666]" />
+          <div className="text-xs sm:text-sm font-mono-code font-black text-[#111111] bg-[#F3F4F6] px-3.5 py-1.5 rounded-xl border border-[#D1D5DB] flex items-center gap-2 shadow-2xs">
+            <Clock className="w-4 h-4 text-[#111111]" />
             <span>
               {formatTime12(nextClass.startTime)} – {formatTime12(nextClass.endTime)}
             </span>
@@ -447,21 +447,21 @@ export const NextClassCard: React.FC<NextClassCardProps> = ({
 
       {nextClassTomorrow && (
         <div className="w-full md:w-auto p-4 rounded-2xl bg-[#F9FAFB] border border-[#E5E5E5] text-xs font-mono-code flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 shrink-0 shadow-2xs">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="text-[#666666] text-[10px] uppercase font-bold">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[#92400E] bg-[#FEF3C7] px-2 py-0.5 rounded text-[10px] uppercase font-mono-code font-black border border-[#FDE68A]">
                 NEXT CLASS ({nextClassTomorrow.day.toUpperCase()}):
               </span>
-              <span className="text-[#111111] font-bold">
+              <span className="text-[#111111] font-mono-code font-black text-xs sm:text-sm bg-[#FFFFFF] px-2.5 py-0.5 rounded-lg border border-[#E5E5E5] shadow-2xs">
                 {formatTime12(nextClassTomorrow.entry.startTime)} – {formatTime12(nextClassTomorrow.entry.endTime)}
               </span>
             </div>
-            <div className="text-[#111111] text-xs font-sans font-semibold">
+            <div className="text-[#111111] text-xs font-sans font-bold">
               {nextClassTomorrow.entry.courseName}
             </div>
             {countdown.totalSeconds > 0 && (
-              <div className="text-[11px] font-mono-code font-bold text-[#16A34A] flex items-center gap-1.5 pt-0.5">
-                <Hourglass className="w-3.5 h-3.5 text-[#16A34A] animate-spin" />
+              <div className="text-xs font-mono-code font-black text-[#16A34A] flex items-center gap-1.5 pt-0.5">
+                <Hourglass className="w-4 h-4 text-[#16A34A] animate-spin" />
                 <span>Starts in {countdown.hours}h {countdown.minutes}m {countdown.seconds}s (उलटा टाइमिंग)</span>
               </div>
             )}

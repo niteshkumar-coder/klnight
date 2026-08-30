@@ -221,18 +221,18 @@ export const DayTypeView: React.FC<DayTypeViewProps> = ({
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                   {/* Left: Time & Badges */}
                   <div className="flex items-center gap-2 flex-wrap">
-                    <div className="flex items-center gap-1.5 font-mono-code font-bold text-xs text-[#111111] bg-[#F3F4F6] px-2.5 py-1 rounded-lg border border-[#E5E5E5]">
-                      <Clock className="w-3.5 h-3.5 text-[#666666]" />
-                      <span>{block.time}</span>
+                    <div className="flex items-center gap-1.5 font-mono-code font-black text-xs sm:text-sm text-[#111111] bg-[#F3F4F6] px-3 py-1.5 rounded-xl border border-[#D1D5DB] shadow-2xs">
+                      <Clock className="w-4 h-4 text-[#111111]" />
+                      <span className="tracking-wide">{block.time}</span>
                     </div>
 
-                    <span className="text-[11px] font-mono-code text-[#666666] bg-[#FFFFFF] px-2 py-0.5 rounded border border-[#E5E5E5]">
+                    <span className="text-xs font-mono-code font-bold text-[#444444] bg-[#FFFFFF] px-2.5 py-1 rounded-lg border border-[#E5E5E5] shadow-2xs">
                       {block.duration}
                     </span>
 
                     {/* Priority Badge */}
                     <span
-                      className={`text-[10px] font-mono-code font-bold px-2 py-0.5 rounded-full ${priorityBadge.bg} ${priorityBadge.text}`}
+                      className={`text-[11px] font-mono-code font-extrabold px-2.5 py-1 rounded-full ${priorityBadge.bg} ${priorityBadge.text} shadow-2xs`}
                     >
                       {priorityBadge.label}
                     </span>
