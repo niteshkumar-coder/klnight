@@ -16,6 +16,7 @@ export function normalizeDay(rawDay: string): DayOfWeek {
   if (clean.startsWith('thu')) return 'Thursday';
   if (clean.startsWith('fri')) return 'Friday';
   if (clean.startsWith('sat')) return 'Saturday';
+  if (clean.startsWith('sun')) return 'Sunday';
   return 'Monday';
 }
 

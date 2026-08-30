@@ -7,6 +7,8 @@ import {
   BookOpen,
   CheckCircle2,
   Clock,
+  Sparkles,
+  Target,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '../lib/api';
@@ -28,6 +30,7 @@ import { DayWiseTimetable } from './DayWiseTimetable';
 import { DebugModal } from './DebugModal';
 import { Header } from './Header';
 import { InstallAppBanner } from './InstallAppBanner';
+import { LifePlannerSection } from './LifePlannerSection';
 import { NextClassCard } from './NextClassCard';
 import { OfflineBanner } from './OfflineBanner';
 import { ProfileSection } from './ProfileSection';
@@ -46,6 +49,7 @@ const DAYS_ORDER: DayOfWeek[] = [
   'Thursday',
   'Friday',
   'Saturday',
+  'Sunday',
 ];
 
 const NEXT_DAY_MAP: Record<DayOfWeek, DayOfWeek> = {
@@ -54,22 +58,23 @@ const NEXT_DAY_MAP: Record<DayOfWeek, DayOfWeek> = {
   Wednesday: 'Thursday',
   Thursday: 'Friday',
   Friday: 'Saturday',
-  Saturday: 'Monday',
+  Saturday: 'Sunday',
+  Sunday: 'Monday',
 };
 
 // Helper to determine real device current day
 export function getCurrentDay(): DayOfWeek {
   const dayIdx = new Date().getDay();
   const mapDays: Record<number, DayOfWeek> = {
+    0: 'Sunday',
     1: 'Monday',
     2: 'Tuesday',
     3: 'Wednesday',
     4: 'Thursday',
     5: 'Friday',
     6: 'Saturday',
-    0: 'Monday', // Default Sunday to Monday
   };
-  return mapDays[dayIdx] || 'Monday';
+  return mapDays[dayIdx] || 'Sunday';
 }
 
 // Helper to determine real device current 24-hour time HH:MM
@@ -305,16 +310,26 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, initialStudent }
 
     const todayItems = getTodaySchedule();
 
-    // Tomorrow's first class preview
-    const tomorrowDay = NEXT_DAY_MAP[currentRealDay] || 'Monday';
-    const tomorrowItems = getDaySchedule(tomorrowDay);
-    const nextTomorrowObj =
-      tomorrowItems.length > 0 ? { day: tomorrowDay, entry: tomorrowItems[0] } : undefined;
+    // Smart lookup for next day with classes (handles Sunday holiday / weekend skip)
+    const findNextUpcomingDayWithClasses = () => {
+      let curr = currentRealDay;
+      for (let step = 1; step <= 7; step++) {
+        const nextDay = NEXT_DAY_MAP[curr];
+        const items = getDaySchedule(nextDay);
+        if (items.length > 0) {
+          return { day: nextDay, entry: items[0], daysAhead: step };
+        }
+        curr = nextDay;
+      }
+      return undefined;
+    };
+
+    const nextUpcomingObj = findNextUpcomingDayWithClasses();
 
     if (todayItems.length === 0) {
       return {
         status: 'no_classes_today' as const,
-        nextClassTomorrow: nextTomorrowObj,
+        nextClassTomorrow: nextUpcomingObj,
         todayClasses: [],
       };
     }
@@ -341,7 +356,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, initialStudent }
     // All classes done today
     return {
       status: 'completed_for_today' as const,
-      nextClassTomorrow: nextTomorrowObj,
+      nextClassTomorrow: nextUpcomingObj,
       todayClasses: todayItems,
     };
   }, [
@@ -509,6 +524,43 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, initialStudent }
                 }}
               />
 
+              {/* 30-Day Master Life & Study Timetable Quick Access Banner */}
+              <div className="bg-[#FFFFFF] border border-[#DDD6FE] rounded-2xl p-5 shadow-xs relative overflow-hidden bg-radial from-[#F5F3FF] via-[#FFFFFF] to-[#FFFFFF]">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-start gap-3.5">
+                    <div className="w-11 h-11 rounded-2xl bg-[#EDE9FE] text-[#6D28D9] flex items-center justify-center font-bold text-xl shrink-0">
+                      🎯
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[10px] font-mono-code font-bold uppercase px-2 py-0.5 rounded-full bg-[#EDE9FE] text-[#6D28D9] border border-[#DDD6FE]">
+                          30-DAY MASTER PLAN (30 AUG – 28 SEP 2026)
+                        </span>
+                        <span className="text-[10px] font-mono-code text-[#16A34A] font-bold">
+                          ● DAY 1 TODAY
+                        </span>
+                      </div>
+                      <h3 className="text-base font-bold text-[#111111] font-display mt-1">
+                        Complete Life, Study & Work Routine
+                      </h3>
+                      <p className="text-xs text-[#555555] mt-0.5 max-w-xl leading-relaxed">
+                        College (7 AM–1 PM) + Java Mastery + Restaurant Job (5 PM–10 PM) + Gym/Swim +
+                        Digital Marketing + YouTube + 7–8h Sleep.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setCurrentTab('life_planner')}
+                    className="px-4 py-2.5 rounded-xl bg-[#111111] hover:bg-black text-[#FFFFFF] font-mono-code font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-2 shadow-xs shrink-0 self-start sm:self-auto"
+                  >
+                    <span>Open 30-Day Timetable</span>
+                    <span>→</span>
+                  </button>
+                </div>
+              </div>
+
               {/* Weekly Timetable with Day Selector */}
               <DayWiseTimetable
                 timetable={filteredTimetable}
@@ -519,6 +571,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ onLogout, initialStudent }
                 currentDayName={currentRealDay}
               />
             </div>
+          )}
+
+          {/* TAB: 30-DAY LIFE, STUDY & WORK MASTER PLANNER */}
+          {currentTab === 'life_planner' && (
+            <LifePlannerSection
+              currentDayName={currentRealDay}
+              currentDateRaw="2026-08-30"
+            />
           )}
 
           {/* TAB 2: TIMETABLE VIEW */}

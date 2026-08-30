@@ -6,6 +6,7 @@ import {
   Home,
   Settings,
   Smartphone,
+  Target,
   User,
 } from 'lucide-react';
 import React from 'react';
@@ -27,9 +28,9 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 }) => {
   const tabs = [
     { id: 'home' as NavTab, label: 'Home', icon: Home },
+    { id: 'life_planner' as NavTab, label: '30-Day', icon: Target },
     { id: 'timetable' as NavTab, label: 'Schedule', icon: Calendar },
     { id: 'attendance' as NavTab, label: 'Attendance', icon: CheckCircle2 },
-    { id: 'courses' as NavTab, label: 'Courses', icon: BookOpen },
     { id: 'profile' as NavTab, label: 'Profile', icon: User },
   ];
 

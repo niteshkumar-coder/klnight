@@ -26,6 +26,7 @@ const DAYS: DayOfWeek[] = [
   'Thursday',
   'Friday',
   'Saturday',
+  'Sunday',
 ];
 
 export const DayWiseTimetable: React.FC<DayWiseTimetableProps> = ({
@@ -46,6 +47,8 @@ export const DayWiseTimetable: React.FC<DayWiseTimetableProps> = ({
     return currentTime >= entry.startTime && currentTime < entry.endTime;
   };
 
+  const isSelectedSunday = selectedDay.toLowerCase() === 'sunday';
+
   return (
     <section className="space-y-4">
       {/* SECTION HEADER & DAY SELECTOR */}
@@ -62,12 +65,13 @@ export const DayWiseTimetable: React.FC<DayWiseTimetableProps> = ({
           </div>
         </div>
 
-        {/* 6-DAY SELECTOR: 1 ROW ON DESKTOP, HORIZONTALLY SCROLLABLE ON MOBILE */}
+        {/* 7-DAY SELECTOR: 1 ROW ON DESKTOP, HORIZONTALLY SCROLLABLE ON MOBILE */}
         <div className="pt-1">
-          <div className="flex sm:grid sm:grid-cols-6 gap-2 overflow-x-auto no-scrollbar whitespace-nowrap pb-1 sm:pb-0">
+          <div className="flex sm:grid sm:grid-cols-7 gap-2 overflow-x-auto no-scrollbar whitespace-nowrap pb-1 sm:pb-0">
             {DAYS.map((day) => {
               const isSelected = selectedDay === day;
               const isRealToday = day.toLowerCase() === currentDayName.toLowerCase();
+              const isSunday = day.toLowerCase() === 'sunday';
               const count = timetable.filter((e) => e.day.toLowerCase() === day.toLowerCase()).length;
 
               return (
@@ -76,35 +80,51 @@ export const DayWiseTimetable: React.FC<DayWiseTimetableProps> = ({
                   id={`btn-day-${day.toLowerCase()}`}
                   type="button"
                   onClick={() => onSelectDay(day)}
-                  className={`min-w-[100px] sm:min-w-0 flex-1 flex flex-col items-center justify-center py-2.5 px-3 rounded-xl text-xs font-mono-code transition-colors cursor-pointer border ${
+                  className={`min-w-[95px] sm:min-w-0 flex-1 flex flex-col items-center justify-center py-2.5 px-2 rounded-xl text-xs font-mono-code transition-colors cursor-pointer border ${
                     isSelected
                       ? 'bg-[#111111] text-[#FFFFFF] font-bold border-[#111111] shadow-xs'
+                      : isSunday
+                      ? 'bg-[#FFFBEB] text-[#92400E] border-[#FDE68A] hover:bg-[#FEF3C7]'
                       : 'bg-[#FFFFFF] text-[#666666] border-[#E5E5E5] hover:border-[#CCCCCC] hover:text-[#111111] hover:bg-[#F9FAFB]'
                   }`}
                 >
-                  {/* Today indicator */}
-                  {isRealToday && (
+                  {/* Today indicator or Holiday indicator */}
+                  {isRealToday ? (
                     <span
                       className={`text-[9px] font-bold uppercase px-1.5 py-0.2 rounded-md mb-0.5 tracking-wider ${
                         isSelected
                           ? 'bg-[#FFFFFF] text-[#111111]'
-                          : 'bg-[#F3F4F6] text-[#111111] border border-[#E5E5E5]'
+                          : 'bg-[#111111] text-[#FFFFFF]'
                       }`}
                     >
                       TODAY
                     </span>
-                  )}
+                  ) : isSunday ? (
+                    <span
+                      className={`text-[8.5px] font-bold uppercase px-1 py-0.2 rounded mb-0.5 tracking-wider ${
+                        isSelected
+                          ? 'bg-[#B8FF00] text-[#111111]'
+                          : 'bg-[#FEF3C7] text-[#B45309]'
+                      }`}
+                    >
+                      HOLIDAY
+                    </span>
+                  ) : null}
 
                   <span className="font-bold tracking-wider uppercase text-xs">
-                    {day}
+                    {day.substring(0, 3)}
                   </span>
 
                   <span
                     className={`text-[10px] mt-0.5 ${
-                      isSelected ? 'text-[#D1D5DB]' : 'text-[#888888]'
+                      isSelected
+                        ? 'text-[#D1D5DB]'
+                        : isSunday
+                        ? 'text-[#B45309] font-medium'
+                        : 'text-[#888888]'
                     }`}
                   >
-                    {count} {count === 1 ? 'class' : 'classes'}
+                    {isSunday ? 'Holiday' : `${count} ${count === 1 ? 'class' : 'classes'}`}
                   </span>
                 </button>
               );
@@ -115,7 +135,7 @@ export const DayWiseTimetable: React.FC<DayWiseTimetableProps> = ({
 
       {/* SELECTED DAY HEADING */}
       <div className="flex items-center justify-between px-1 pt-1">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <h3 className="text-lg font-bold text-[#111111] font-display uppercase tracking-wide">
             {selectedDay}
           </h3>
@@ -124,22 +144,45 @@ export const DayWiseTimetable: React.FC<DayWiseTimetableProps> = ({
               TODAY
             </span>
           )}
+          {isSelectedSunday && (
+            <span className="text-[10px] font-mono-code font-bold px-2.5 py-0.5 rounded-full bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A]">
+              WEEKEND HOLIDAY (साप्ताहिक अवकाश)
+            </span>
+          )}
         </div>
         <span className="text-xs text-[#666666] font-mono-code">
-          {dayClasses.length} {dayClasses.length === 1 ? 'Class' : 'Classes'} Scheduled
+          {isSelectedSunday
+            ? '0 Classes · Holiday'
+            : `${dayClasses.length} ${dayClasses.length === 1 ? 'Class' : 'Classes'} Scheduled`}
         </span>
       </div>
 
       {/* TIMETABLE LIST FOR ONLY THE SELECTED DAY */}
       {dayClasses.length === 0 ? (
         <div className="bg-[#FFFFFF] border border-[#E5E5E5] rounded-2xl p-8 text-center shadow-sm">
-          <div className="text-3xl mb-2">🎉</div>
-          <h4 className="text-base font-bold text-[#111111] font-display">
-            No Classes on {selectedDay}
+          <div className="text-4xl mb-3">{isSelectedSunday ? '🏖️' : '🎉'}</div>
+          <h4 className="text-lg font-bold text-[#111111] font-display">
+            {isSelectedSunday
+              ? 'Sunday — Weekly Holiday (रविवार - साप्ताहिक छुट्टी)'
+              : `No Classes on ${selectedDay}`}
           </h4>
-          <p className="text-xs text-[#666666] mt-1 max-w-md mx-auto">
-            No lectures or practical labs scheduled for this day. Enjoy your free time or prepare for upcoming coursework.
+          <p className="text-xs text-[#666666] mt-1.5 max-w-md mx-auto leading-relaxed">
+            {isSelectedSunday
+              ? 'KL University campuses are closed on Sundays. No lectures, practical labs, or tutorial sessions are scheduled. Enjoy your weekend off!'
+              : 'No lectures or practical labs scheduled for this day. Enjoy your free time or prepare for upcoming coursework.'}
           </p>
+
+          {isSelectedSunday && (
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => onSelectDay('Monday')}
+                className="px-4 py-2 rounded-xl bg-[#111111] hover:bg-black text-xs font-mono-code font-bold text-[#FFFFFF] transition-colors cursor-pointer shadow-xs"
+              >
+                View Monday Timetable →
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <div className="space-y-3">

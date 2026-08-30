@@ -11,7 +11,15 @@ interface WeeklyGridCalendarProps {
   currentTime?: string;
 }
 
-const DAYS: DayOfWeek[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const DAYS: DayOfWeek[] = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+];
 
 export const WeeklyGridCalendar: React.FC<WeeklyGridCalendarProps> = ({
   timetable,
@@ -48,7 +56,7 @@ export const WeeklyGridCalendar: React.FC<WeeklyGridCalendarProps> = ({
             WEEKLY TIMETABLE MATRIX
           </h2>
           <p className="text-xs text-[#666666]">
-            Full slot-by-slot master schedule for Odd Semester 2026-27
+            Full slot-by-slot master schedule for Odd Semester 2026-27 (Mon – Sun)
           </p>
         </div>
         <div className="hidden sm:flex items-center gap-3 text-[11px] font-mono-code text-[#666666]">
@@ -56,33 +64,43 @@ export const WeeklyGridCalendar: React.FC<WeeklyGridCalendarProps> = ({
           <span>[S] Session</span>
           <span>[P] Practical</span>
           <span>[T] Tutorial</span>
+          <span className="text-[#92400E] font-bold">[SUN] Holiday</span>
         </div>
       </div>
 
       {/* Responsive Horizontal Scroll Container */}
       <div className="overflow-x-auto pb-2">
-        <table className="w-full min-w-[760px] border-collapse text-left text-xs">
+        <table className="w-full min-w-[880px] border-collapse text-left text-xs">
           <thead>
             <tr className="border-b border-[#E5E5E5] bg-[#F9FAFB]">
-              <th className="py-3 px-3 text-[#666666] font-mono-code font-bold uppercase text-[11px] w-32">
+              <th className="py-3 px-3 text-[#666666] font-mono-code font-bold uppercase text-[11px] w-28">
                 TIME / SLOT
               </th>
               {DAYS.map((day) => {
                 const isToday = day.toLowerCase() === currentDayName.toLowerCase();
+                const isSunday = day.toLowerCase() === 'sunday';
                 return (
                   <th
                     key={day}
                     className={`py-3 px-3 font-display font-bold uppercase text-xs ${
-                      isToday ? 'text-[#111111] bg-[#F3F4F6]' : 'text-[#111111]'
+                      isToday
+                        ? 'text-[#111111] bg-[#F3F4F6]'
+                        : isSunday
+                        ? 'text-[#92400E] bg-[#FEF3C7]/40'
+                        : 'text-[#111111]'
                     }`}
                   >
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <span>{day.substring(0, 3)}</span>
-                      {isToday && (
+                      {isToday ? (
                         <span className="text-[9px] px-1.5 py-0.2 rounded bg-[#111111] text-[#FFFFFF] font-mono-code">
                           TODAY
                         </span>
-                      )}
+                      ) : isSunday ? (
+                        <span className="text-[8.5px] px-1.5 py-0.2 rounded bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A] font-mono-code">
+                          HOLIDAY
+                        </span>
+                      ) : null}
                     </div>
                   </th>
                 );
@@ -102,6 +120,7 @@ export const WeeklyGridCalendar: React.FC<WeeklyGridCalendarProps> = ({
                 {DAYS.map((day) => {
                   const entry = findEntry(day, slot.slot);
                   const isCurrentDay = day.toLowerCase() === currentDayName.toLowerCase();
+                  const isSunday = day.toLowerCase() === 'sunday';
                   const isNow =
                     isCurrentDay &&
                     currentTime >= slot.startTime &&
@@ -111,7 +130,11 @@ export const WeeklyGridCalendar: React.FC<WeeklyGridCalendarProps> = ({
                     <td
                       key={day}
                       className={`py-2 px-2.5 align-top ${
-                        isCurrentDay ? 'bg-[#FAFAFA]/70' : ''
+                        isCurrentDay
+                          ? 'bg-[#FAFAFA]/70'
+                          : isSunday
+                          ? 'bg-[#FFFBEB]/30'
+                          : ''
                       }`}
                     >
                       {entry ? (
@@ -148,6 +171,10 @@ export const WeeklyGridCalendar: React.FC<WeeklyGridCalendarProps> = ({
                               {entry.faculty.split(' ')[0]}
                             </span>
                           </div>
+                        </div>
+                      ) : isSunday ? (
+                        <div className="h-full min-h-[64px] flex items-center justify-center text-[10px] text-[#D97706]/60 font-mono-code">
+                          Off (छुट्टी)
                         </div>
                       ) : (
                         <div className="h-full min-h-[64px] flex items-center justify-center text-[10px] text-[#D1D5DB] font-mono-code">

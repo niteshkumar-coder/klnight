@@ -8,11 +8,20 @@ import {
   Linkedin,
   Settings,
   Smartphone,
+  Sparkles,
+  Target,
   User,
 } from 'lucide-react';
 import React from 'react';
 
-export type NavTab = 'home' | 'timetable' | 'attendance' | 'courses' | 'profile' | 'settings';
+export type NavTab =
+  | 'home'
+  | 'life_planner'
+  | 'timetable'
+  | 'attendance'
+  | 'courses'
+  | 'profile'
+  | 'settings';
 
 interface SidebarProps {
   currentTab: NavTab;
@@ -37,11 +46,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: Home,
     },
     {
+      id: 'life_planner' as NavTab,
+      label: '30-DAY PLAN',
+      sub: 'Life, Study & Work',
+      icon: Target,
+      badge: 'AUG–SEP',
+      badgeColor: 'text-[#5B21B6] bg-[#EDE9FE] border-[#DDD6FE]',
+    },
+    {
       id: 'timetable' as NavTab,
       label: 'TIMETABLE',
       sub: 'Day-wise & Week',
       icon: Calendar,
-      badge: 'MON–SAT',
+      badge: 'MON–SUN',
     },
     {
       id: 'attendance' as NavTab,

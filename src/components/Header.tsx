@@ -43,6 +43,8 @@ export const Header: React.FC<HeaderProps> = ({
   isMockMode = true,
 }) => {
   const [currentTimeFormatted, setCurrentTimeFormatted] = useState<string>('');
+  const [currentDateFormatted, setCurrentDateFormatted] = useState<string>('');
+  const [isSundayToday, setIsSundayToday] = useState<boolean>(false);
   const [greeting, setGreeting] = useState<string>('Good morning');
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
 
@@ -70,6 +72,16 @@ export const Header: React.FC<HeaderProps> = ({
       } else {
         setGreeting('Good evening');
       }
+
+      setIsSundayToday(now.getDay() === 0);
+
+      setCurrentDateFormatted(
+        now.toLocaleDateString('en-US', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+        })
+      );
 
       setCurrentTimeFormatted(
         now.toLocaleTimeString('en-US', {
@@ -120,23 +132,34 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
 
-          {/* Mobile Clock */}
-          <div className="md:hidden flex items-center gap-2">
+          {/* Mobile Clock & Date */}
+          <div className="md:hidden flex items-center gap-1.5">
+            {isSundayToday && (
+              <span className="px-1.5 py-0.5 rounded bg-[#FEF3C7] border border-[#FDE68A] text-[#92400E] text-[10px] font-mono-code font-bold">
+                HOLIDAY
+              </span>
+            )}
             <div className="px-2.5 py-1 rounded-lg bg-[#F9FAFB] border border-[#E5E5E5] text-[11px] font-mono-code text-[#111111] font-bold">
               {currentTimeFormatted}
             </div>
           </div>
         </div>
 
-        {/* Center: REAL-TIME CURRENT TIME CLOCK (updates every second) */}
-        <div className="hidden md:flex items-center gap-3">
+        {/* Center: REAL-TIME CURRENT TIME CLOCK (updates every second) & DATE */}
+        <div className="hidden md:flex items-center gap-2.5">
           <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#F9FAFB] border border-[#E5E5E5] text-xs font-mono-code shadow-2xs">
             <Clock className="w-3.5 h-3.5 text-[#666666]" />
-            <span className="text-[#666666] font-medium">CURRENT TIME:</span>
+            <span className="text-[#666666] font-medium">{currentDateFormatted}:</span>
             <span className="font-bold text-[#111111] tracking-wide">
               {currentTimeFormatted || '12:00:00 PM'}
             </span>
           </div>
+
+          {isSundayToday && (
+            <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-[#FEF3C7] border border-[#FDE68A] text-xs font-mono-code font-bold text-[#92400E]">
+              <span>🏖️ SUNDAY HOLIDAY (छुट्टी)</span>
+            </div>
+          )}
         </div>
 
         {/* Right: Actions */}

@@ -38,20 +38,31 @@ export const TodaySchedule: React.FC<TodayScheduleProps> = ({
     return () => clearInterval(timer);
   }, []);
 
+  const isSunday = dayName.toLowerCase() === 'sunday';
+
   if (classes.length === 0) {
     return (
       <div className="bg-[#FFFFFF] border border-[#E5E5E5] rounded-2xl p-8 text-center shadow-xs">
-        <div className="text-4xl mb-3">🎉</div>
-        <h3 className="text-lg font-bold text-[#111111] font-display">
-          TODAY — {dayName.toUpperCase()}
-        </h3>
-        <p className="text-xs text-[#666666] mt-1 max-w-sm mx-auto">
-          No classes scheduled for today. Enjoy your day or catch up on coursework.
+        <div className="text-4xl mb-3">{isSunday ? '🏖️' : '🎉'}</div>
+        <div className="flex items-center justify-center gap-2 mb-1">
+          <h3 className="text-lg font-bold text-[#111111] font-display">
+            TODAY — {dayName.toUpperCase()}
+          </h3>
+          {isSunday && (
+            <span className="text-[10px] font-mono-code font-bold px-2 py-0.5 rounded-full bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A]">
+              HOLIDAY
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-[#666666] mt-1 max-w-md mx-auto leading-relaxed">
+          {isSunday
+            ? 'रविवार की छुट्टी है (Sunday Weekend Holiday). आज कोई क्लास नहीं है। Enjoy your weekend & rest!'
+            : 'No classes scheduled for today. Enjoy your day or catch up on coursework.'}
         </p>
         <button
           type="button"
           onClick={onViewAllDays}
-          className="mt-4 px-4 py-2 rounded-xl bg-[#111111] hover:bg-black text-xs font-mono-code font-bold text-[#B8FF00] transition-colors cursor-pointer shadow-xs"
+          className="mt-4 px-4 py-2 rounded-xl bg-[#111111] hover:bg-black text-xs font-mono-code font-bold text-[#FFFFFF] transition-colors cursor-pointer shadow-xs"
         >
           View Full Week Timetable →
         </button>
